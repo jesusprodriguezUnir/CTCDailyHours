@@ -65,6 +65,7 @@ CTC Daily Hours es una aplicación web moderna diseñada para facilitar el regis
 ### Herramientas de Desarrollo
 - **PWA Plugin** - Soporte para Progressive Web App
 - **Autoprefixer** - Compatibilidad CSS cross-browser
+- **gh-pages** - Deployment automatizado
 
 ## 📦 Estructura del Proyecto
 
@@ -109,7 +110,7 @@ CTCDailyHours/
 
 1. **Clonar el repositorio**
 ```bash
-git clone [URL_DEL_REPOSITORIO]
+git clone https://github.com/jesusprodriguezUnir/CTCDailyHours.git
 cd CTCDailyHours
 ```
 
@@ -171,6 +172,68 @@ La aplicación estará disponible en `http://localhost:5173`
 - `npm run dev` - Inicia el servidor de desarrollo
 - `npm run build` - Genera la versión de producción
 - `npm run preview` - Previsualiza la build de producción
+- `npm run deploy` - Construye y despliega en GitHub Pages
+
+## 🌐 Deployment en GitHub Pages
+
+### Método Simple con gh-pages
+
+Este proyecto usa `gh-pages` para deployment automático.
+
+### Configuración Inicial (Solo una vez)
+
+1. **Configurar GitHub Pages**
+   - Ve a: https://github.com/jesusprodriguezUnir/CTCDailyHours/settings/pages
+   - En **"Source"**, selecciona: **`Deploy from a branch`**
+   - En **"Branch"**, selecciona: **`gh-pages`** / **`/ (root)`**
+   - Click en **Save**
+
+### Desplegar la Aplicación
+
+**Comando único para build y deploy:**
+```bash
+npm run deploy
+```
+
+Este comando:
+1. ✅ Construye la aplicación optimizada
+2. ✅ Crea/actualiza la rama `gh-pages` automáticamente
+3. ✅ Sube los archivos compilados a GitHub
+4. ✅ GitHub Pages lo publica automáticamente
+
+### Workflow de Desarrollo
+
+```bash
+# Desarrollo local
+npm run dev
+
+# Cuando estés listo para publicar cambios:
+git add .
+git commit -m "Descripción de los cambios"
+git push origin main      # Guarda tu código fuente
+npm run deploy            # Publica en GitHub Pages
+```
+
+### Ver tu Aplicación Desplegada
+
+Una vez desplegado (tarda 1-2 minutos):
+```
+https://jesusprodriguezunir.github.io/CTCDailyHours/
+```
+
+### Problemas Comunes
+
+**Error 404 después del deployment:**
+- Verifica que `base: '/CTCDailyHours/'` en `vite.config.js` coincida con el nombre del repositorio
+- Asegúrate de que GitHub Pages esté configurado en "Deploy from a branch" → "gh-pages"
+
+**Los cambios no se ven:**
+- Espera 1-2 minutos después de `npm run deploy`
+- Limpia el caché del navegador (Ctrl + Shift + R)
+
+**Error de permisos al hacer deploy:**
+- Asegúrate de estar autenticado en GitHub
+- Verifica que tengas permisos de escritura en el repositorio
 
 ## 👤 Usuarios de Ejemplo
 
@@ -255,80 +318,7 @@ Las contribuciones son bienvenidas. Para cambios importantes:
 4. Push a la rama (`git push origin feature/AmazingFeature`)
 5. Abre un Pull Request
 
-## � Deployment en GitHub Pages
-
-### Configuración Inicial
-
-1. **Crear repositorio en GitHub**
-   - Ve a [GitHub](https://github.com/new)
-   - Crea un nuevo repositorio (público o privado)
-   - **NO inicialices** con README, .gitignore o licencia
-
-2. **Configurar GitHub Pages**
-   - Ve a Settings → Pages en tu repositorio
-   - En "Source", selecciona "GitHub Actions"
-
-3. **Actualizar vite.config.js**
-   - Asegúrate de que la línea `base` en `vite.config.js` tenga el nombre correcto de tu repositorio:
-   ```javascript
-   base: '/nombre-de-tu-repositorio/'
-   ```
-
-### Desplegar por Primera Vez
-
-```bash
-# Inicializar git (si no está inicializado)
-git init
-
-# Añadir todos los archivos
-git add .
-
-# Hacer commit inicial
-git commit -m "Initial commit"
-
-# Añadir el remote de GitHub (reemplaza con tu URL)
-git remote add origin https://github.com/tu-usuario/tu-repositorio.git
-
-# Renombrar rama a main (si es necesario)
-git branch -M main
-
-# Push al repositorio
-git push -u origin main
-```
-
-### Deployment Automático
-
-Una vez configurado, cada push a la rama `main` desplegará automáticamente la aplicación gracias a GitHub Actions.
-
-### Despliegues Posteriores
-
-```bash
-# Hacer cambios en el código
-git add .
-git commit -m "Descripción de los cambios"
-git push
-```
-
-### Verificar el Deployment
-
-1. Ve a la pestaña "Actions" en tu repositorio de GitHub
-2. Verás el workflow ejecutándose
-3. Una vez completado, tu app estará disponible en:
-   ```
-   https://tu-usuario.github.io/tu-repositorio/
-   ```
-
-### Problemas Comunes
-
-**Error 404 después del deployment:**
-- Verifica que `base` en `vite.config.js` coincida con el nombre del repositorio
-- Asegúrate de que GitHub Pages esté configurado para usar GitHub Actions
-
-**Rutas no funcionan:**
-- Verifica la configuración de `base` en vite.config.js
-- Asegúrate de usar rutas relativas en tu código
-
-## �📄 Licencia
+## 📄 Licencia
 
 Este proyecto es privado y está bajo la licencia de CTC.
 
