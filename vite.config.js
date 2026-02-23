@@ -30,5 +30,7 @@ export default defineConfig({
       }
     })
   ],
-  base: './'
+  // Configura la base URL para GitHub Pages
+  // Cambia 'CTCDailyHours' por el nombre de tu repositorio
+  base: '/CTCDailyHours/'
 })
