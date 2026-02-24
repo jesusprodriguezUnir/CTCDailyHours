@@ -232,7 +232,7 @@ ON CONFLICT (id) DO NOTHING;
 
 -- Administrador del sistema
 INSERT INTO employees (id, name, role, password, department_id, active) VALUES
-(1, 'Admin Sistema', 'admin', 'admin123', 1, true)
+(1, 'Admin Sistema', 'admin', 'admin123', (SELECT id FROM departments ORDER BY id LIMIT 1), true)
 ON CONFLICT (id) DO NOTHING;
 
 -- Responsables/Supervisores
