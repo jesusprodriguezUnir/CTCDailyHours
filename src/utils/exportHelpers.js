@@ -330,17 +330,17 @@ export function groupByPeriodForExport(entries) {
         'Fecha': formattedDate,
         'Total Horas': 0,
         'Número de Entradas': 0,
-        '_centros': new Set(),
-        '_departamentos': new Set()
+        '_internal_centros': new Set(),
+        '_internal_departamentos': new Set()
       }
     }
     grouped[dateKey]['Total Horas'] += parseFloat(entry.hours)
     grouped[dateKey]['Número de Entradas'] += 1
     if (entry.employee?.department?.work_center?.name) {
-      grouped[dateKey]['_centros'].add(entry.employee.department.work_center.name)
+      grouped[dateKey]['_internal_centros'].add(entry.employee.department.work_center.name)
     }
     if (entry.employee?.department?.name) {
-      grouped[dateKey]['_departamentos'].add(entry.employee.department.name)
+      grouped[dateKey]['_internal_departamentos'].add(entry.employee.department.name)
     }
   })
   
@@ -348,8 +348,8 @@ export function groupByPeriodForExport(entries) {
   return Object.entries(grouped)
     .map(([dateKey, row]) => ({
       ...row,
-      'Centros': Array.from(row._centros).join(', ') || 'N/A',
-      'Departamentos': Array.from(row._departamentos).join(', ') || 'N/A',
+      'Centros': Array.from(row._internal_centros).join(', ') || 'N/A',
+      'Departamentos': Array.from(row._internal_departamentos).join(', ') || 'N/A',
       _dateKey: dateKey
     }))
     .map(row => ({
@@ -360,5 +360,5 @@ export function groupByPeriodForExport(entries) {
       // Ordenar por la clave de fecha ISO (YYYY-MM-DD)
       return a._dateKey.localeCompare(b._dateKey)
     })
-    .map(({ _dateKey, _centros, _departamentos, ...rest }) => rest)
+    .map(({ _dateKey, _internal_centros, _internal_departamentos, ...rest }) => rest)
 }
