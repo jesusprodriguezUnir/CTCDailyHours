@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { TASKS, TIME_INCREMENTS } from '../data/mockData'
+import { TIME_INCREMENTS } from '../data/mockData'
 
-export function TimeEntryRow({ entry, taskName, onUpdate, onDelete, canEdit }) {
+export function TimeEntryRow({ entry, taskName, tasks, onUpdate, onDelete, canEdit }) {
   const [editing, setEditing] = useState(false)
   const [hours, setHours] = useState(entry.hours)
   const [taskId, setTaskId] = useState(entry.task_id)
@@ -26,7 +26,7 @@ export function TimeEntryRow({ entry, taskName, onUpdate, onDelete, canEdit }) {
             onChange={(e) => setTaskId(e.target.value)}
             className="w-full p-2 border rounded-lg text-sm"
           >
-            {TASKS.map(t => (
+            {tasks.map(t => (
               <option key={t.id} value={t.id}>{t.name}</option>
             ))}
           </select>

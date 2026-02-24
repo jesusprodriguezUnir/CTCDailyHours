@@ -1,13 +1,17 @@
 import { useState } from 'react'
 import { EmployeeManagement } from './EmployeeManagement'
 import { TaskManagement } from './TaskManagement'
+import { WorkCenterManagement } from './WorkCenterManagement'
+import { DepartmentManagement } from './DepartmentManagement'
 
 export function AdminPanel() {
   const [activeTab, setActiveTab] = useState('employees')
 
   const tabs = [
-    { id: 'employees', label: '👥 Empleados' },
-    { id: 'tasks', label: '📋 Tareas' }
+    { id: 'employees', label: '👥 Empleados', icon: '👥' },
+    { id: 'tasks', label: '📋 Tareas', icon: '📋' },
+    { id: 'centers', label: '🏢 Centros', icon: '🏢' },
+    { id: 'departments', label: '🏬 Departamentos', icon: '🏬' }
   ]
 
   return (
@@ -24,13 +28,13 @@ export function AdminPanel() {
 
           {/* Tabs Navigation */}
           <div className="border-t border-gray-200">
-            <nav className="flex">
+            <nav className="flex overflow-x-auto">
               {tabs.map(tab => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
                   className={`
-                    px-6 py-3 text-sm font-medium border-b-2 transition-colors
+                    px-6 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap
                     ${activeTab === tab.id
                       ? 'border-blue-600 text-blue-600'
                       : 'border-transparent text-gray-600 hover:text-gray-800 hover:border-gray-300'
@@ -48,6 +52,8 @@ export function AdminPanel() {
         <div className="bg-white shadow-md rounded-lg">
           {activeTab === 'employees' && <EmployeeManagement />}
           {activeTab === 'tasks' && <TaskManagement />}
+          {activeTab === 'centers' && <WorkCenterManagement />}
+          {activeTab === 'departments' && <DepartmentManagement />}
         </div>
       </div>
     </div>

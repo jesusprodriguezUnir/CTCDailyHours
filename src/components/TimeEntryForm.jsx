@@ -9,7 +9,7 @@ export function TimeEntryForm({ user, onBack }) {
   const [saving, setSaving] = useState(false)
   const [success, setSuccess] = useState(false)
   const { addEntry } = useTimeEntries()
-  const { tasks } = useTasks()
+  const { tasks, loading: loadingTasks } = useTasks()
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -71,6 +71,9 @@ export function TimeEntryForm({ user, onBack }) {
               </option>
             ))}
           </select>
+          {loadingTasks && (
+            <p className="text-sm text-gray-500 mt-2">Cargando tareas...</p>
+          )}
         </div>
 
         <div>

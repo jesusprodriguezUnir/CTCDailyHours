@@ -6,7 +6,7 @@ export function useEmployeeManagement() {
   const [error, setError] = useState(null)
 
   // Agregar nuevo empleado
-  const addEmployee = async (name, role, password) => {
+  const addEmployee = async (name, role, password, departmentId) => {
     setLoading(true)
     setError(null)
     
@@ -22,6 +22,10 @@ export function useEmployeeManagement() {
       
       if (!['employee', 'responsible', 'admin'].includes(role)) {
         throw new Error('Rol inválido')
+      }
+
+      if (!departmentId) {
+        throw new Error('El departamento es requerido')
       }
       
       // Verificar si ya existe un empleado con ese nombre
@@ -44,6 +48,7 @@ export function useEmployeeManagement() {
           name: name.trim(),
           role,
           password,
+          department_id: departmentId,
           active: true
         }])
         .select()
@@ -77,6 +82,10 @@ export function useEmployeeManagement() {
       
       if (updates.role && !['employee', 'responsible', 'admin'].includes(updates.role)) {
         throw new Error('Rol inválido')
+      }
+
+      if ('department_id' in updates && !updates.department_id) {
+        throw new Error('El departamento es requerido')
       }
       
       // Si se actualiza el nombre, verificar que no exista otro con ese nombre
@@ -198,7 +207,15 @@ export function useEmployeeManagement() {
     try {
       let query = supabase
         .from('employees')
-        .select('*')
+        .select(`
+          *,
+          department:departments(
+            id,
+            name,
+            code,
+            work_center:work_centers(id, name, code)
+          )
+        `)
         .order('name')
       
       // Aplicar filtros
