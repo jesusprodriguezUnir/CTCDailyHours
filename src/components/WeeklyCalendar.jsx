@@ -136,7 +136,7 @@ export function WeeklyCalendar({
   }
 
   const getWeekTotal = () => {
-    return filteredEntries.reduce((sum, e) => sum + (e.hours || 0), 0)
+    return Object.values(entriesByDay).flat().reduce((sum, e) => sum + (e.hours || 0), 0)
   }
 
   const formatDisplayDate = (date) => {
