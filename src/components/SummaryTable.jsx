@@ -91,12 +91,17 @@ export function SummaryTable({ user, isResponsible, isAdmin }) {
   }, [entries, dateRange, selectedEmployees, selectedTasks, selectedCenters, selectedDepartments, user, isResponsible, isAdmin])
 
   // Enriquecer entradas con información de empleado y tarea
+  // Prioritize data from the employees list since it always includes the full
+  // department and work_center joins required for export fields
   const enrichedEntries = useMemo(() => {
-    return filteredEntries.map(entry => ({
-      ...entry,
-      employee: entry.employee || employees.find(e => e.id === entry.employee_id),
-      task: entry.task || tasks.find(t => t.id === entry.task_id)
-    }))
+    return filteredEntries.map(entry => {
+      const employeeWithJoins = employees.find(e => e.id === entry.employee_id)
+      return {
+        ...entry,
+        employee: employeeWithJoins || entry.employee,
+        task: entry.task || tasks.find(t => t.id === entry.task_id)
+      }
+    })
   }, [filteredEntries, employees, tasks])
 
   // Calcular resumen según modo de vista
