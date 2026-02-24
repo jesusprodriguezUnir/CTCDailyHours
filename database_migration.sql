@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS work_centers (
 -- Tabla de departamentos asociados a centros
 CREATE TABLE IF NOT EXISTS departments (
   id BIGSERIAL PRIMARY KEY,
-  work_center_id BIGINT NOT NULL REFERENCES work_centers(id) ON DELETE CASCADE,
+  work_center_id BIGINT NOT NULL REFERENCES work_centers(id) ON DELETE RESTRICT,
   name TEXT NOT NULL,
   code TEXT NOT NULL,
   active BOOLEAN DEFAULT true,
