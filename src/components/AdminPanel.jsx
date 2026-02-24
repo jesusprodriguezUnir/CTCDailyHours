@@ -6,8 +6,8 @@ export function AdminPanel() {
   const [activeTab, setActiveTab] = useState('employees')
 
   const tabs = [
-    { id: 'employees', label: '👥 Empleados', icon: '👥' },
-    { id: 'tasks', label: '📋 Tareas', icon: '📋' }
+    { id: 'employees', label: '👥 Empleados' },
+    { id: 'tasks', label: '📋 Tareas' }
   ]
 
   return (
@@ -37,10 +37,7 @@ export function AdminPanel() {
                     }
                   `}
                 >
-                  <span className="flex items-center gap-2">
-                    <span>{tab.icon}</span>
-                    <span>{tab.label}</span>
-                  </span>
+                  {tab.label}
                 </button>
               ))}
             </nav>
