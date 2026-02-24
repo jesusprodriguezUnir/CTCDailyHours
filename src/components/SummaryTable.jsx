@@ -234,7 +234,7 @@ export function SummaryTable({ user, isResponsible, isAdmin }) {
                 setSelectedTasks(values)
               }}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              size="1"
+              size="5"
             >
               {tasks.map(task => (
                 <option key={task.id} value={task.id}>{task.name}</option>
