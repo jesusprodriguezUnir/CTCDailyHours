@@ -313,26 +313,34 @@ export function groupByPeriodForExport(entries) {
   const grouped = {}
   
   entries.forEach(entry => {
-    const date = new Date(entry.date).toLocaleDateString('es-ES')
-    if (!grouped[date]) {
-      grouped[date] = {
-        'Fecha': date,
+    const dateObj = new Date(entry.date)
+    const dateKey = dateObj.toISOString().split('T')[0] // YYYY-MM-DD, estable para ordenar
+    const formattedDate = dateObj.toLocaleDateString('es-ES')
+
+    if (!grouped[dateKey]) {
+      grouped[dateKey] = {
+        'Fecha': formattedDate,
         'Total Horas': 0,
         'Número de Entradas': 0
       }
     }
-    grouped[date]['Total Horas'] += parseFloat(entry.hours)
-    grouped[date]['Número de Entradas'] += 1
+    grouped[dateKey]['Total Horas'] += parseFloat(entry.hours)
+    grouped[dateKey]['Número de Entradas'] += 1
   })
   
   // Convertir a array y redondear valores
-  return Object.values(grouped).map(row => ({
-    ...row,
-    'Total Horas': parseFloat(row['Total Horas'].toFixed(2))
-  })).sort((a, b) => {
-    // Ordenar por fecha
-    const dateA = new Date(a['Fecha'].split('/').reverse().join('-'))
-    const dateB = new Date(b['Fecha'].split('/').reverse().join('-'))
-    return dateA - dateB
-  })
+  return Object.entries(grouped)
+    .map(([dateKey, row]) => ({
+      ...row,
+      _dateKey: dateKey
+    }))
+    .map(row => ({
+      ...row,
+      'Total Horas': parseFloat(row['Total Horas'].toFixed(2))
+    }))
+    .sort((a, b) => {
+      // Ordenar por la clave de fecha ISO (YYYY-MM-DD)
+      return a._dateKey.localeCompare(b._dateKey)
+    })
+    .map(({ _dateKey, ...rest }) => rest)
 }
