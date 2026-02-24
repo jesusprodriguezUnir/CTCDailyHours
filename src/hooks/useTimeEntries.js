@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { fetchTimeEntries, createTimeEntry } from '../lib/supabase'
 
-const USE_MOCK = true
+const USE_MOCK = false
 
 let mockEntries = [
   { id: 1, employee_id: 8, task_id: 1, hours: 3.0, date: '2026-02-23', created_at: '2026-02-23T08:00:00Z' },

@@ -65,11 +65,16 @@ export function Login({ onLogin }) {
               className="w-full p-3 border-2 border-gray-300 rounded-xl focus:border-blue-600 focus:outline-none bg-white"
             >
               <option value="">-- Seleccionar --</option>
-              {employees.map(emp => (
-                <option key={emp.id} value={emp.id}>
-                  {emp.name} {emp.role === 'responsible' ? '(Responsable)' : ''}
-                </option>
-              ))}
+              {employees.map(emp => {
+                let badge = ''
+                if (emp.role === 'admin') badge = ' 🔴 (Admin)'
+                else if (emp.role === 'responsible') badge = ' 🟡 (Responsable)'
+                return (
+                  <option key={emp.id} value={emp.id}>
+                    {emp.name}{badge}
+                  </option>
+                )
+              })}
             </select>
           </div>
 
@@ -96,8 +101,9 @@ export function Login({ onLogin }) {
 
         <div className="mt-6 p-4 bg-gray-100 rounded-lg text-sm text-gray-600">
           <p className="font-semibold mb-2">Usuarios de prueba:</p>
-          <p>• Empleados: nombre123 (ej: juan123)</p>
+          <p>• Admin: admin123 (Administrador del sistema)</p>
           <p>• Responsables: nombre123 (ej: pedro123)</p>
+          <p>• Empleados: nombre123 (ej: juan123)</p>
         </div>
       </div>
     </div>

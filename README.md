@@ -9,9 +9,10 @@ CTC Daily Hours es una aplicación web moderna diseñada para facilitar el regis
 ## ✨ Características Principales
 
 ### 🔐 Sistema de Autenticación
-- Login diferenciado para empleados y responsables
+- Login diferenciado para empleados, responsables y administradores
 - Sistema de contraseñas simple y efectivo
-- Gestión de roles (Empleado / Responsable)
+- Gestión de roles (Empleado / Responsable / Administrador)
+- Indicadores visuales de rol con códigos de color
 
 ### 📝 Registro de Horas
 - Registro rápido de horas trabajadas por tarea
@@ -42,11 +43,37 @@ CTC Daily Hours es una aplicación web moderna diseñada para facilitar el regis
 - Capacidad de agregar entradas para cualquier empleado
 - Edición y eliminación de registros existentes
 
+### ⚙️ Panel de Administración (Administradores)
+- **Gestión de Empleados**: CRUD completo de empleados
+  - Crear nuevos empleados con rol y contraseña
+  - Editar información de empleados existentes
+  - Activar/Desactivar empleados
+  - Filtros por rol y estado
+- **Gestión de Tareas**: CRUD completo de tareas
+  - Crear nuevas tareas
+  - Editar nombres de tareas
+  - Activar/Desactivar tareas
+  - Visualización de tareas activas e inactivas
+
 ### 📊 Resumen y Estadísticas
 - Total de horas por día
 - Total de horas por semana
 - Visualización de productividad por empleado
 - Indicadores visuales de carga de trabajo
+
+### 📄 Sistema de Reportes Avanzado
+- **Filtros Avanzados**:
+  - Rango de fechas personalizado
+  - Filtro por empleados (multi-selección)
+  - Filtro por tareas (multi-selección)
+- **Tres Vistas de Reportes**:
+  - Por Empleado: Muestra horas totales y desglose por tarea de cada empleado
+  - Por Tarea: Muestra horas totales por cada tipo de tarea
+  - Por Período: Muestra horas totales por día
+- **Exportación Múltiple**:
+  - 📊 **Excel (.xlsx)**: Formato con columnas autoajustadas
+  - 📄 **PDF**: Formato profesional con encabezados y totales
+  - 📄 **CSV**: Formato compatible con Excel (UTF-8 con BOM)
 
 ## 🛠️ Tecnologías Utilizadas
 
@@ -74,25 +101,34 @@ CTCDailyHours/
 ├── public/                 # Archivos estáticos
 ├── src/
 │   ├── components/        # Componentes React
+│   │   ├── AdminPanel.jsx        # Panel de administración
 │   │   ├── Calendar.jsx          # Calendario mensual
 │   │   ├── DayView.jsx           # Vista detallada del día
+│   │   ├── EmployeeManagement.jsx # Gestión de empleados
 │   │   ├── EmployeeSelector.jsx  # Selector de empleados
 │   │   ├── Layout.jsx            # Layout principal
 │   │   ├── Login.jsx             # Pantalla de login
-│   │   ├── SummaryTable.jsx      # Tabla resumen
+│   │   ├── SummaryTable.jsx      # Tabla resumen y reportes
+│   │   ├── TaskManagement.jsx    # Gestión de tareas
 │   │   ├── TimeEntryForm.jsx     # Formulario de registro
 │   │   ├── TimeEntryRow.jsx      # Fila de entrada de tiempo
 │   │   └── WeeklyCalendar.jsx    # Calendario semanal
 │   ├── data/
 │   │   └── mockData.js           # Datos de prueba y constantes
 │   ├── hooks/
+│   │   ├── useEmployeeManagement.js # Hook para CRUD de empleados
 │   │   ├── useEmployees.js       # Hook para gestión de empleados
+│   │   ├── useTasks.js           # Hook para CRUD de tareas
 │   │   └── useTimeEntries.js     # Hook para gestión de entradas
 │   ├── lib/
 │   │   └── supabase.js           # Configuración de Supabase
+│   ├── utils/
+│   │   └── exportHelpers.js      # Utilidades de exportación
 │   ├── App.jsx                   # Componente principal
 │   ├── index.css                 # Estilos globales
 │   └── main.jsx                  # Punto de entrada
+├── database_migration.sql    # Script de migración de BD
+├── database_seed.sql         # Script de datos iniciales
 ├── index.html
 ├── package.json
 ├── postcss.config.js
@@ -120,34 +156,39 @@ npm install
 ```
 
 3. **Configurar Supabase**
-- Crear un proyecto en [Supabase](https://supabase.com)
-- Actualizar las credenciales en `src/lib/supabase.js`:
+
+Las credenciales de Supabase ya están configuradas en `src/lib/supabase.js`. Si necesitas cambiarlas:
+
 ```javascript
-const supabaseUrl = 'TU_SUPABASE_URL'
-const supabaseKey = 'TU_SUPABASE_KEY'
+const supabaseUrl = 'https://ipbvulbzxrnbiipberxh.supabase.co'
+const supabaseKey = 'sb_publishable_CFRyVd9rCpVIERPyhtN0Bg_N_cjfyRC'
 ```
 
-4. **Crear las tablas en Supabase**
+4. **Configurar la Base de Datos en Supabase**
 
-Ejecutar los siguientes SQL en el editor SQL de Supabase:
+Ejecuta los siguientes scripts SQL en el editor SQL de Supabase **en este orden**:
 
-```sql
--- Tabla de empleados
-CREATE TABLE employees (
-  id BIGSERIAL PRIMARY KEY,
-  name TEXT NOT NULL,
-  role TEXT NOT NULL CHECK (role IN ('employee', 'responsible')),
-  password TEXT NOT NULL,
-  active BOOLEAN DEFAULT true,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
+**a) Primero ejecuta el script de migración:**
+```bash
+# Abre database_migration.sql y copia el contenido al editor SQL de Supabase
+```
 
--- Tabla de tareas
-CREATE TABLE tasks (
-  id BIGSERIAL PRIMARY KEY,
-  name TEXT NOT NULL,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
+Este script:
+- Modifica la tabla `employees` para incluir el rol `admin`
+- Agrega el campo `active` a la tabla `tasks`
+- Crea índices para optimizar las consultas
+
+**b) Luego ejecuta el script de datos iniciales:**
+```bash
+# Abre database_seed.sql y copia el contenido al editor SQL de Supabase
+```
+
+Este script:
+- Inserta las 4 tareas predefinidas
+- Crea el usuario administrador (admin123)
+- Crea 7 usuarios responsables
+- Crea 50 empleados de ejemplo
+- Opcionalmente, inserta entradas de ejemplo
 
 -- Tabla de entradas de tiempo
 CREATE TABLE time_entries (
@@ -166,6 +207,42 @@ npm run dev
 ```
 
 La aplicación estará disponible en `http://localhost:5173`
+
+## 👥 Sistema de Roles y Permisos
+
+### Roles Disponibles
+
+| Rol | 🏷️ Badge | Permisos |
+|-----|--------|----------|
+| **Administrador** | 🔴 Rojo | Acceso total: gestión de empleados, tareas, ver todos los registros, exportar reportes |
+| **Responsable** | 🟡 Amarillo | Ver y gestionar registros de todos los empleados, exportar reportes |
+| **Empleado** | 🟢 Verde | Ver y gestionar solo sus propios registros |
+
+### Usuarios de Prueba
+
+#### Administrador
+| Usuario | Contraseña | Acceso |
+|---------|-----------|--------|
+| Admin Sistema | admin123 | Panel completo de administración |
+
+#### Responsables
+| Usuario | Contraseña |
+|---------|------------|
+| Pedro Sánchez | pedro123 |
+| Laura García | laura123 |
+| Miguel Torres | miguel123 |
+| Carmen Ruiz | carmen123 |
+| Antonio López | antonio123 |
+| María José Fernández | maria123 |
+| Francisco Gómez | francisco123 |
+
+#### Empleados
+Los empleados tienen contraseñas en formato: `[nombre]123`
+
+Por ejemplo:
+- Juan García → juan123
+- María Rodríguez → maría123
+- José Martínez → josé123
 
 ## 🔧 Scripts Disponibles
 
@@ -236,7 +313,10 @@ https://jesusprodriguezunir.github.io/CTCDailyHours/
 - Verifica que tengas permisos de escritura en el repositorio
 
 ## 👤 Usuarios de Ejemplo
-
+### Administrador
+| Usuario | Contraseña | Descripción |
+|---------|-----------|-------------|
+| Admin Sistema | admin123 | Acceso completo al sistema |
 ### Responsables
 | Usuario | Contraseña |
 |---------|-----------|
@@ -254,11 +334,18 @@ Por ejemplo: Juan García → juan123
 
 ## 🎨 Interfaz de Usuario
 
+### Navegación Principal
+- **📅 Calendario**: Vista semanal interactiva para registro de horas
+- **📊 Resumen**: Reportes avanzados con filtros y exportación
+- **📋 Detalle Día**: Vista detallada de entradas por día
+- **⚙️ Administración**: Panel de gestión (solo administradores)
+
 ### Pantalla de Login
 - Diseño limpio y moderno
-- Selección de usuario desde dropdown
+- Selección de usuario desde dropdown con indicador de rol
 - Campo de contraseña
 - Validación de credenciales
+- Badges de color según rol (🔴 Admin, 🟡 Responsable, 🟢 Empleado)
 
 ### Vista Principal (Empleados)
 - Vista semanal del calendario
@@ -282,32 +369,76 @@ La aplicación está optimizada para:
 ## 🔒 Seguridad
 
 - Autenticación requerida para acceder
-- Roles diferenciados (Empleado/Responsable)
+- Roles diferenciados (Empleado / Responsable / Administrador)
 - Los empleados solo pueden ver/editar sus propios registros
 - Los responsables tienen acceso completo a todos los registros
+- Los administradores pueden gestionar empleados y tareas
+- Control de acceso basado en roles para cada sección
 
 ## 🌐 Base de Datos
+
+### Esquema Actualizado
+
+```sql
+-- Tabla de empleados (con rol admin)
+CREATE TABLE employees (
+  id BIGSERIAL PRIMARY KEY,
+  name TEXT NOT NULL,
+  role TEXT NOT NULL CHECK (role IN ('employee', 'responsible', 'admin')),
+  password TEXT NOT NULL,
+  active BOOLEAN DEFAULT true,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Tabla de tareas (con campo active)
+CREATE TABLE tasks (
+  id BIGSERIAL PRIMARY KEY,
+  name TEXT NOT NULL,
+  active BOOLEAN DEFAULT true,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Tabla de entradas de tiempo
+CREATE TABLE time_entries (
+  id BIGSERIAL PRIMARY KEY,
+  employee_id BIGINT REFERENCES employees(id),
+  task_id BIGINT REFERENCES tasks(id),
+  date DATE NOT NULL,
+  hours NUMERIC(4,2) NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Índices para optimización
+CREATE INDEX idx_time_entries_date ON time_entries(date);
+CREATE INDEX idx_time_entries_employee ON time_entries(employee_id);
+CREATE INDEX idx_time_entries_task ON time_entries(task_id);
+CREATE INDEX idx_employees_role ON employees(role);
+CREATE INDEX idx_employees_active ON employees(active);
+CREATE INDEX idx_tasks_active ON tasks(active);
+```
 
 ### Tablas Principales
 
 1. **employees** - Información de empleados
-   - id, name, role, password, active
+   - id, name, role (employee/responsible/admin), password, active
 
 2. **tasks** - Catálogo de tareas
-   - id, name
+   - id, name, active
 
 3. **time_entries** - Registro de horas
    - id, employee_id, task_id, date, hours
 
 ## 📈 Futuras Mejoras
 
-- [ ] Exportación de reportes a Excel/PDF
-- [ ] Gráficas de productividad
+- [ ] Sistema de aprobación de horas por responsables
+- [ ] Gráficas interactivas de productividad
 - [ ] Notificaciones push
 - [ ] Modo offline (PWA completo)
-- [ ] Filtros avanzados de fechas
-- [ ] Reportes mensuales automáticos
-- [ ] Dashboard de estadísticas
+- [ ] Historial de cambios/auditoría
+- [ ] Reportes mensuales automatizados
+- [ ] Dashboard de estadísticas en tiempo real
+- [ ] Integración con sistemas de nómina
+- [ ] API REST pública para integraciones
 
 ## 🤝 Contribuciones
 

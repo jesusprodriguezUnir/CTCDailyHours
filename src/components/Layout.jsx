@@ -1,7 +1,19 @@
 import { useState } from 'react'
 
+function getRoleBadge(role) {
+  switch (role) {
+    case 'admin':
+      return { text: 'Administrador', color: 'bg-red-100 text-red-800 border-red-300', emoji: '🔴' }
+    case 'responsible':
+      return { text: 'Responsable', color: 'bg-yellow-100 text-yellow-800 border-yellow-300', emoji: '🟡' }
+    default:
+      return { text: 'Empleado', color: 'bg-green-100 text-green-800 border-green-300', emoji: '🟢' }
+  }
+}
+
 export function Layout({ children, user, onLogout }) {
   const [showMenu, setShowMenu] = useState(false)
+  const roleBadge = user ? getRoleBadge(user.role) : null
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -18,10 +30,14 @@ export function Layout({ children, user, onLogout }) {
           </button>
         </div>
         
-        {showMenu && (
+        {showMenu && user && (
           <div className="mt-4 pb-2">
-            <div className="text-sm opacity-80 mb-2">
-              {user?.name} ({user?.role === 'responsible' ? 'Responsable' : 'Empleado'})
+            <div className="mb-3">
+              <div className="text-sm font-medium mb-2">{user.name}</div>
+              <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold border ${roleBadge.color}`}>
+                <span>{roleBadge.emoji}</span>
+                <span>{roleBadge.text}</span>
+              </span>
             </div>
             <button
               onClick={onLogout}
