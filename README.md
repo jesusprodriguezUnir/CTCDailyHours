@@ -157,11 +157,17 @@ npm install
 
 3. **Configurar Supabase**
 
-Las credenciales de Supabase ya están configuradas en `src/lib/supabase.js`. Si necesitas cambiarlas:
+Copia el archivo de ejemplo de variables de entorno y complétalo con tus credenciales de Supabase:
 
-```javascript
-const supabaseUrl = 'https://ipbvulbzxrnbiipberxh.supabase.co'
-const supabaseKey = 'sb_publishable_CFRyVd9rCpVIERPyhtN0Bg_N_cjfyRC'
+```bash
+cp .env.example .env
+```
+
+Edita `.env` con tus valores de Supabase (los encontrarás en *Project Settings → API* en el panel de Supabase):
+
+```
+VITE_SUPABASE_URL=https://your-project-id.supabase.co
+VITE_SUPABASE_ANON_KEY=your-anon-key-here
 ```
 
 4. **Configurar la Base de Datos en Supabase**

@@ -151,19 +151,45 @@ DROP POLICY IF EXISTS "public_read_active_tasks" ON tasks;
 CREATE POLICY "public_read_active_tasks" ON tasks
   FOR SELECT USING (active = true);
 
--- Política: Permitir todas las operaciones (simplificado para esta versión)
--- NOTA: En producción, implementar políticas más restrictivas con Supabase Auth
+-- NOTA DE SEGURIDAD: Las políticas siguientes permiten acceso desde la clave anon.
+-- Antes de pasar a producción, implementa Supabase Auth y restringe estas políticas
+-- a usuarios autenticados usando: USING (auth.role() = 'authenticated')
+
+-- Políticas para time_entries (los usuarios registran y editan sus horas)
 DROP POLICY IF EXISTS "allow_all_time_entries" ON time_entries;
-CREATE POLICY "allow_all_time_entries" ON time_entries
-  FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "anon_select_time_entries" ON time_entries;
+DROP POLICY IF EXISTS "anon_insert_time_entries" ON time_entries;
+DROP POLICY IF EXISTS "anon_update_time_entries" ON time_entries;
+CREATE POLICY "anon_select_time_entries" ON time_entries
+  FOR SELECT USING (true);
+CREATE POLICY "anon_insert_time_entries" ON time_entries
+  FOR INSERT WITH CHECK (true);
+CREATE POLICY "anon_update_time_entries" ON time_entries
+  FOR UPDATE USING (true) WITH CHECK (true);
 
+-- Políticas para gestión de tasks (operaciones de administrador)
 DROP POLICY IF EXISTS "allow_all_tasks_management" ON tasks;
-CREATE POLICY "allow_all_tasks_management" ON tasks
-  FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "anon_insert_tasks" ON tasks;
+DROP POLICY IF EXISTS "anon_update_tasks" ON tasks;
+DROP POLICY IF EXISTS "anon_delete_tasks" ON tasks;
+CREATE POLICY "anon_insert_tasks" ON tasks
+  FOR INSERT WITH CHECK (true);
+CREATE POLICY "anon_update_tasks" ON tasks
+  FOR UPDATE USING (true) WITH CHECK (true);
+CREATE POLICY "anon_delete_tasks" ON tasks
+  FOR DELETE USING (true);
 
+-- Políticas para gestión de employees (operaciones de administrador)
 DROP POLICY IF EXISTS "allow_all_employees_management" ON employees;
-CREATE POLICY "allow_all_employees_management" ON employees
-  FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "anon_insert_employees" ON employees;
+DROP POLICY IF EXISTS "anon_update_employees" ON employees;
+DROP POLICY IF EXISTS "anon_delete_employees" ON employees;
+CREATE POLICY "anon_insert_employees" ON employees
+  FOR INSERT WITH CHECK (true);
+CREATE POLICY "anon_update_employees" ON employees
+  FOR UPDATE USING (true) WITH CHECK (true);
+CREATE POLICY "anon_delete_employees" ON employees
+  FOR DELETE USING (true);
 
 -- PASO 8: Verificación de datos
 -- ============================================
