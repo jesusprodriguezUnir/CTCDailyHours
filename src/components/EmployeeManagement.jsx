@@ -1,6 +1,32 @@
 import { useState, useEffect } from 'react'
 import { useEmployeeManagement } from '../hooks/useEmployeeManagement'
 
+function getPasswordStrength(password) {
+  if (!password) return null
+  const hasLower = /[a-z]/.test(password)
+  const hasUpper = /[A-Z]/.test(password)
+  const hasDigit = /\d/.test(password)
+  const hasSpecial = /[^a-zA-Z0-9]/.test(password)
+  const variety = [hasLower, hasUpper, hasDigit, hasSpecial].filter(Boolean).length
+  if (password.length < 4) return { label: 'Muy débil', barColor: 'bg-red-500', textColor: 'text-red-500', width: 'w-1/4' }
+  if (password.length < 8 || variety < 2) return { label: 'Débil', barColor: 'bg-orange-400', textColor: 'text-orange-400', width: 'w-2/4' }
+  if (password.length < 12 || variety < 3) return { label: 'Media', barColor: 'bg-yellow-400', textColor: 'text-yellow-500', width: 'w-3/4' }
+  return { label: 'Fuerte', barColor: 'bg-green-500', textColor: 'text-green-600', width: 'w-full' }
+}
+
+function PasswordStrengthIndicator({ password }) {
+  const strength = getPasswordStrength(password)
+  if (!strength) return null
+  return (
+    <div className="mt-1">
+      <div className="h-1.5 w-full bg-gray-200 rounded-full overflow-hidden">
+        <div className={`h-full rounded-full transition-all ${strength.barColor} ${strength.width}`} />
+      </div>
+      <p className={`text-xs mt-0.5 ${strength.textColor}`}>{strength.label}</p>
+    </div>
+  )
+}
+
 export function EmployeeManagement() {
   const {
     loading,
@@ -353,8 +379,12 @@ export function EmployeeManagement() {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder={editingEmployee ? 'Nueva contraseña (opcional)' : 'Contraseña'}
                   disabled={saving}
+                  autoComplete="new-password"
                 />
-                {!editingEmployee && (
+                {formData.password && (
+                  <PasswordStrengthIndicator password={formData.password} />
+                )}
+                {!editingEmployee && !formData.password && (
                   <p className="text-xs text-gray-500 mt-1">Mínimo 4 caracteres</p>
                 )}
               </div>
