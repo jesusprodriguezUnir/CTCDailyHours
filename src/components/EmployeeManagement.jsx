@@ -46,7 +46,7 @@ export function EmployeeManagement() {
     name: '',
     role: 'employee',
     password: '',
-    department_id: ''
+    department_id: null
   })
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState(null)
