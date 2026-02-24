@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS employees (
   id BIGSERIAL PRIMARY KEY,
   name TEXT NOT NULL,
   role TEXT NOT NULL CHECK (role IN ('employee', 'responsible', 'admin')),
-  password TEXT NOT NULL,
+  password_hash TEXT NOT NULL,
   active BOOLEAN DEFAULT true,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
