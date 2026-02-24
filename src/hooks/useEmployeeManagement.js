@@ -84,7 +84,7 @@ export function useEmployeeManagement() {
         throw new Error('Rol inválido')
       }
 
-      if (updates.department_id === null) {
+      if ('department_id' in updates && !updates.department_id) {
         throw new Error('El departamento es requerido')
       }
       
