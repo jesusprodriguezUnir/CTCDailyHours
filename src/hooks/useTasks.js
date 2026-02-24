@@ -53,11 +53,15 @@ export function useTasks() {
           customer_id,
           active: true
         }])
-        .select()
+        .select(`
+          *,
+          customer:customers(id, name, code)
+        `)
       
       if (insertError) throw insertError
       
-      await fetchTasks(true)
+      // Update local state directly without a refetch
+      setTasks(prev => [...prev, data[0]].sort((a, b) => (a.name ?? '').localeCompare(b.name ?? '')))
       
       return { success: true, data: data[0] }
     } catch (err) {
@@ -75,11 +79,18 @@ export function useTasks() {
         .from('tasks')
         .update(updates)
         .eq('id', id)
-        .select()
+        .select(`
+          *,
+          customer:customers(id, name, code)
+        `)
       
       if (updateError) throw updateError
       
-      await fetchTasks(true)
+      // Update local state directly without a refetch
+      setTasks(prev =>
+        prev.map(task => task.id === id ? data[0] : task)
+          .sort((a, b) => (a.name ?? '').localeCompare(b.name ?? ''))
+      )
       
       return { success: true, data: data[0] }
     } catch (err) {
