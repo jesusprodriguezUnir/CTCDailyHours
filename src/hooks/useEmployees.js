@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { MOCK_EMPLOYEES } from '../data/mockData'
 import { fetchEmployees } from '../lib/supabase'
 
-const USE_MOCK = true
+const USE_MOCK = false
 
 export function useEmployees() {
   const [employees, setEmployees] = useState([])

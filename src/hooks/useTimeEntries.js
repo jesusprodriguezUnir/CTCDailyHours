@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { fetchTimeEntries, createTimeEntry } from '../lib/supabase'
 
-const USE_MOCK = true
+const USE_MOCK = false
 
 let mockEntries = [
   { id: 1, employee_id: 8, task_id: 1, hours: 3.0, date: '2026-02-23', created_at: '2026-02-23T08:00:00Z' },
@@ -12,7 +12,7 @@ let mockEntries = [
   { id: 6, employee_id: 8, task_id: 4, hours: 2.0, date: '2026-02-22', created_at: '2026-02-22T12:00:00Z' },
 ]
 
-export function useTimeEntries(date = null) {
+export function useTimeEntries(date = null, user = null) {
   const [entries, setEntries] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -26,7 +26,9 @@ export function useTimeEntries(date = null) {
           : mockEntries
         setEntries(filtered)
       } else {
-        const data = await fetchTimeEntries(date)
+        // For regular employees, filter at database level to enforce access control
+        const employeeId = user?.role === 'employee' ? user.id : null
+        const data = await fetchTimeEntries(date, employeeId)
         setEntries(data)
       }
     } catch (err) {
@@ -34,7 +36,7 @@ export function useTimeEntries(date = null) {
     } finally {
       setLoading(false)
     }
-  }, [date])
+  }, [date, user?.id, user?.role])
 
   useEffect(() => {
     loadEntries()
