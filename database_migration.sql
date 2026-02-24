@@ -151,11 +151,55 @@ DROP POLICY IF EXISTS "public_read_active_tasks" ON tasks;
 CREATE POLICY "public_read_active_tasks" ON tasks
   FOR SELECT USING (active = true);
 
--- NOTA DE SEGURIDAD: Las políticas siguientes permiten acceso desde la clave anon.
--- Antes de pasar a producción, implementa Supabase Auth y restringe estas políticas
--- a usuarios autenticados usando: USING (auth.role() = 'authenticated')
+-- ============================================
+-- NOTA DE SEGURIDAD IMPORTANTE / IMPORTANT SECURITY NOTE
+-- ============================================
+-- Esta aplicación utiliza autenticación personalizada (tabla employees) en lugar de
+-- Supabase Auth. Por este motivo, las políticas RLS no pueden usar auth.uid() para
+-- restringir el acceso por fila a nivel de base de datos.
+--
+-- MITIGACIÓN APLICADA:
+--   - El acceso de lectura (SELECT) está restringido en la capa de aplicación:
+--     fetchTimeEntries() aplica un filtro por employee_id cuando el usuario tiene
+--     rol 'employee', garantizando que sólo se solicitan al servidor los registros
+--     propios. Esto complementa el filtrado client-side existente.
+--   - Las operaciones de escritura (INSERT/UPDATE/DELETE) no están restringidas a
+--     nivel RLS por la misma razón; deben validarse en la capa de servicio.
+--
+-- PARA UNA SEGURIDAD COMPLETA A NIVEL DE BASE DE DATOS:
+--   Integra Supabase Auth y reemplaza las políticas permisivas por las siguientes
+--   (descomentar y adaptar cuando se use Supabase Auth):
+--
+--   -- SELECT: cada usuario sólo ve sus propias entradas (o admin/responsible ven todas)
+--   -- CREATE POLICY "employee_select_own_time_entries" ON time_entries
+--   --   FOR SELECT USING (
+--   --     auth.uid()::text = (SELECT auth_id FROM employees WHERE id = employee_id)
+--   --     OR EXISTS (
+--   --       SELECT 1 FROM employees
+--   --       WHERE auth_id = auth.uid()::text AND role IN ('admin', 'responsible')
+--   --     )
+--   --   );
+--
+--   -- INSERT: un usuario sólo puede insertar entradas para sí mismo
+--   -- CREATE POLICY "employee_insert_own_time_entries" ON time_entries
+--   --   FOR INSERT WITH CHECK (
+--   --     auth.uid()::text = (SELECT auth_id FROM employees WHERE id = employee_id)
+--   --   );
+--
+--   -- UPDATE/DELETE: un usuario sólo puede modificar/borrar sus propias entradas
+--   -- CREATE POLICY "employee_modify_own_time_entries" ON time_entries
+--   --   FOR UPDATE USING (
+--   --     auth.uid()::text = (SELECT auth_id FROM employees WHERE id = employee_id)
+--   --   ) WITH CHECK (
+--   --     auth.uid()::text = (SELECT auth_id FROM employees WHERE id = employee_id)
+--   --   );
+--   -- CREATE POLICY "employee_delete_own_time_entries" ON time_entries
+--   --   FOR DELETE USING (
+--   --     auth.uid()::text = (SELECT auth_id FROM employees WHERE id = employee_id)
+--   --   );
+-- ============================================
 
--- Políticas para time_entries (los usuarios registran y editan sus horas)
+-- Políticas para time_entries (permisivas mientras se use auth personalizada)
 DROP POLICY IF EXISTS "allow_all_time_entries" ON time_entries;
 DROP POLICY IF EXISTS "anon_select_time_entries" ON time_entries;
 DROP POLICY IF EXISTS "anon_insert_time_entries" ON time_entries;

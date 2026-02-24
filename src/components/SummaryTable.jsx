@@ -13,7 +13,7 @@ import {
 } from '../utils/exportHelpers'
 
 export function SummaryTable({ user, isResponsible, isAdmin }) {
-  const { entries, loading: loadingEntries } = useTimeEntries()
+  const { entries, loading: loadingEntries } = useTimeEntries(null, user)
   const { employees, loading: loadingEmployees } = useEmployees()
   const { tasks, loading: loadingTasks } = useTasks()
   
