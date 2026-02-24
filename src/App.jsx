@@ -3,7 +3,6 @@ import { Layout } from './components/Layout'
 import { Login } from './components/Login'
 import { WeeklyCalendar } from './components/WeeklyCalendar'
 import { SummaryTable } from './components/SummaryTable'
-import { DayView } from './components/DayView'
 import { AdminPanel } from './components/AdminPanel'
 import { useTimeEntries } from './hooks/useTimeEntries'
 
@@ -14,6 +13,7 @@ function App() {
 
   const isResponsible = user?.role === 'responsible'
   const isAdmin = user?.role === 'admin'
+  const canManage = isAdmin || isResponsible // Admin y Responsables pueden gestionar
 
   const handleLogin = (employee) => {
     setUser(employee)
@@ -68,24 +68,8 @@ function App() {
                 </span>
               </button>
 
-              <button
-                onClick={() => setActiveView('day')}
-                className={`
-                  px-6 py-4 text-sm font-medium border-b-2 transition-colors whitespace-nowrap
-                  ${activeView === 'day'
-                    ? 'border-blue-600 text-blue-600'
-                    : 'border-transparent text-gray-600 hover:text-gray-800 hover:border-gray-300'
-                  }
-                `}
-              >
-                <span className="flex items-center gap-2">
-                  <span>📋</span>
-                  <span>Detalle Día</span>
-                </span>
-              </button>
-
-              {/* Solo mostrar administración para admin */}
-              {isAdmin && (
+              {/* Administración para admin y responsables */}
+              {canManage && (
                 <button
                   onClick={() => setActiveView('admin')}
                   className={`
@@ -120,17 +104,14 @@ function App() {
           )}
 
           {activeView === 'summary' && (
-            <SummaryTable />
-          )}
-
-          {activeView === 'day' && (
-            <DayView
+            <SummaryTable 
               user={user}
               isResponsible={isResponsible}
+              isAdmin={isAdmin}
             />
           )}
 
-          {activeView === 'admin' && isAdmin && (
+          {activeView === 'admin' && canManage && (
             <AdminPanel />
           )}
         </div>

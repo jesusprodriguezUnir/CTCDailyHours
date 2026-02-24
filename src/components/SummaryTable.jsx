@@ -12,7 +12,7 @@ import {
   formatTimeEntriesForExport
 } from '../utils/exportHelpers'
 
-export function SummaryTable() {
+export function SummaryTable({ user, isResponsible, isAdmin }) {
   const { entries, loading: loadingEntries } = useTimeEntries()
   const { employees, loading: loadingEmployees } = useEmployees()
   const { tasks, loading: loadingTasks } = useTasks()
@@ -42,6 +42,11 @@ export function SummaryTable() {
   const filteredEntries = useMemo(() => {
     let filtered = entries
 
+    // 🔒 SEGURIDAD: Si es empleado regular, solo puede ver sus propias entradas
+    if (user && !isResponsible && !isAdmin) {
+      filtered = filtered.filter(e => e.employee_id === user.id)
+    }
+
     // Filtrar por rango de fechas
     if (dateRange.start) {
       filtered = filtered.filter(e => e.date >= dateRange.start)
@@ -61,7 +66,7 @@ export function SummaryTable() {
     }
 
     return filtered
-  }, [entries, dateRange, selectedEmployees, selectedTasks])
+  }, [entries, dateRange, selectedEmployees, selectedTasks, user, isResponsible, isAdmin])
 
   // Enriquecer entradas con información de empleado y tarea
   const enrichedEntries = useMemo(() => {
@@ -169,7 +174,9 @@ export function SummaryTable() {
       <div className="bg-white rounded-lg shadow p-4 mb-6">
         <h3 className="font-semibold text-gray-800 mb-3">Filtros</h3>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 ${
+          (isResponsible || isAdmin) ? 'lg:grid-cols-4' : 'lg:grid-cols-3'
+        }`}>
           {/* Rango de fechas */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Fecha Inicio</label>
@@ -191,26 +198,28 @@ export function SummaryTable() {
             />
           </div>
 
-          {/* Filtro de empleados */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Empleados ({selectedEmployees.length > 0 ? selectedEmployees.length : 'Todos'})
-            </label>
-            <select
-              multiple
-              value={selectedEmployees}
-              onChange={(e) => {
-                const values = Array.from(e.target.selectedOptions, option => parseInt(option.value))
-                setSelectedEmployees(values)
-              }}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              size="1"
-            >
-              {employees.map(emp => (
-                <option key={emp.id} value={emp.id}>{emp.name}</option>
-              ))}
-            </select>
-          </div>
+          {/* Filtro de empleados - Solo para Admin y Responsable */}
+          {(isResponsible || isAdmin) && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Empleados ({selectedEmployees.length > 0 ? selectedEmployees.length : 'Todos'})
+              </label>
+              <select
+                multiple
+                value={selectedEmployees}
+                onChange={(e) => {
+                  const values = Array.from(e.target.selectedOptions, option => parseInt(option.value))
+                  setSelectedEmployees(values)
+                }}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                size="1"
+              >
+                {employees.map(emp => (
+                  <option key={emp.id} value={emp.id}>{emp.name}</option>
+                ))}
+              </select>
+            </div>
+          )}
 
           {/* Filtro de tareas */}
           <div>
@@ -236,7 +245,7 @@ export function SummaryTable() {
 
         {/* Botones de limpiar filtros */}
         <div className="mt-3 flex gap-2">
-          {selectedEmployees.length > 0 && (
+          {(isResponsible || isAdmin) && selectedEmployees.length > 0 && (
             <button
               onClick={() => setSelectedEmployees([])}
               className="text-sm text-blue-600 hover:underline"

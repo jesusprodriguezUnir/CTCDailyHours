@@ -15,140 +15,182 @@ npm install
 
 ### 3. Configuración de Supabase
 
-#### Credenciales Actuales
-Las credenciales ya están configuradas en `src/lib/supabase.js`:
+#### 📌 Credenciales Configuradas
+Las credenciales ya están en `src/lib/supabase.js`:
 ```javascript
 const supabaseUrl = 'https://ipbvulbzxrnbiipberxh.supabase.co'
 const supabaseKey = 'sb_publishable_CFRyVd9rCpVIERPyhtN0Bg_N_cjfyRC'
 ```
 
-#### Configurar Base de Datos
+#### 🗄️ Configurar Base de Datos paso a paso
 
-1. **Accede al Dashboard de Supabase**: https://supabase.com/dashboard
-2. **Ve a SQL Editor** en tu proyecto
-3. **Ejecuta los scripts en este orden**:
+**IMPORTANTE:** Ejecuta este proceso en Supabase Dashboard:
 
-**Paso 1 - Migración (database_migration.sql)**
-```sql
--- Este script modifica el esquema existente para agregar:
--- - Rol 'admin' a la tabla employees
--- - Campo 'active' a la tabla tasks
--- - Índices para optimización
+1. **Accede a tu proyecto Supabase:**
+   - URL: https://supabase.com/dashboard
+   - Selecciona el proyecto `ipbvulbzxrnbiipberxh`
 
--- Copiar todo el contenido de database_migration.sql y ejecutarlo
-```
+2. **Abre el SQL Editor:**
+   - En el menú lateral izquierdo busca **"SQL Editor"**
+   - Clic en **"New query"** para abrir un editor en blanco
 
-**Paso 2 - Datos Iniciales (database_seed.sql)**
-```sql
--- Este script inserta:
--- - 4 tareas predefinidas
--- - 1 usuario administrador
--- - 7 responsables
--- - 50 empleados de ejemplo
--- - Entradas de tiempo de ejemplo (opcional)
+3. **Copia y pega TODO el contenido del archivo:**
+   - 📄 Archivo: `database_migration.sql` (en la raíz del proyecto)
+   - Este script hace TODO en un solo paso:
+     - ✅ Crea las 3 tablas (employees, tasks, time_entries)
+     - ✅ Crea índices para optimización
+     - ✅ Inserta 4 tareas predefinidas
+     - ✅ Inserta 1 admin + 7 responsables + 20 empleados
+     - ✅ Inserta entradas de tiempo de ejemplo
+     - ✅ Configura políticas de seguridad (RLS)
+     - ✅ Muestra resumen de datos creados
 
--- Copiar todo el contenido de database_seed.sql y ejecutarlo
-```
+4. **Ejecuta el script:**
+   - Clic en **"Run"** o presiona `Ctrl + Enter`
+   - ⏳ Espera 10-15 segundos
+   - ✅ Deberías ver mensajes de éxito y un resumen
+
+5. **Verifica la creación:**
+   - Deberías ver en los resultados:
+     ```
+     🔴 Administradores: 1
+     🟡 Responsables: 7
+     🟢 Empleados: 20
+     📋 4 tareas activas
+     ```
 
 ### 4. Iniciar Aplicación
 ```bash
 npm run dev
 ```
 
-La aplicación estará disponible en: http://localhost:5173
+La aplicación estará disponible en: **http://localhost:5173**
 
 ---
 
 ## 👤 Usuarios de Acceso Inmediato
 
 ### 🔴 Administrador (Acceso Total)
-| Usuario | Contraseña |
-|---------|------------|
-| Admin Sistema | `admin123` |
+| Usuario | Contraseña | Capacidades |
+|---------|------------|-------------|
+| Admin Sistema | `admin123` | ✅ Todo: Gestión empleados, tareas, ver todos los datos, exportar |
 
-**Permisos:**
-- ✅ Gestión de empleados (crear, editar, desactivar)
-- ✅ Gestión de tareas (crear, editar, desactivar)
-- ✅ Ver todas las entradas de tiempo
-- ✅ Exportar reportes (Excel, PDF, CSV)
-- ✅ Acceso a todas las vistas
+### 🟡 Responsables (Gestión y Supervisión)
+| Usuario | Contraseña | Capacidades |
+|---------|------------|-------------|
+| Pedro Sánchez | `pedro123` | ✅ Gestionar tareas<br>✅ Ver todos los empleados<br>✅ Exportar reportes<br>❌ No gestionar empleados |
+| Laura García | `laura123` | (mismas capacidades) |
+| Miguel Torres | `miguel123` | (mismas capacidades) |
 
-### 🟡 Responsables (Supervisión)
-| Usuario | Contraseña |
-|---------|------------|
-| Pedro Sánchez | `pedro123` |
-| Laura García | `laura123` |
-| Miguel Torres | `miguel123` |
-
-**Permisos:**
+**⚡ CAMBIO IMPORTANTE:** Los responsables ahora pueden:
+- ✅ Ver el tab **"⚙️ Administración"**
+- ✅ Gestionar tareas (crear, editar, activar/desactivar)
 - ✅ Ver entradas de todos los empleados
-- ✅ Agregar/editar entradas para cualquier empleado
-- ✅ Exportar reportes
-- ❌ No pueden gestionar empleados ni tareas
+- ✅ Exportar reportes completos
 
-### 🟢 Empleados (Autogestión)
-| Usuario | Contraseña |
-|---------|------------|
-| Juan García | `juan123` |
-| María Rodríguez | `maría123` |
-| José Martínez | `josé123` |
-
-**Permisos:**
-- ✅ Ver solo sus propias entradas
-- ✅ Agregar/editar solo sus propias entradas
-- ❌ No pueden ver entradas de otros
-- ❌ No pueden exportar reportes globales
+### 🟢 Empleados (Solo sus datos)
+| Usuario | Contraseña | Capacidades |
+|---------|------------|-------------|
+| Juan García | `juan123` | ✅ Ver solo SUS entradas<br>✅ Registrar sus horas<br>❌ No ver datos de otros |
+| María Rodríguez | `maría123` | (mismas capacidades) |
+| José Martínez | `josé123` | (mismas capacidades) |
 
 ---
 
 ## 🧪 Verificar Instalación
 
-### Test 1: Login y Roles
-1. Accede a http://localhost:5173
-2. Login como `admin123` → Deberías ver badge 🔴 rojo
-3. Verifica que aparece el tab "⚙️ Administración"
-4. Cierra sesión
-5. Login como `pedro123` → Badge 🟡 amarillo, sin tab Admin
-6. Cierra sesión
-7. Login como `juan123` → Badge 🟢 verde, sin tab Admin
+### ✅ Test 1: Login y Roles - 2 min
 
-### Test 2: Gestión de Tareas (Solo Admin)
-1. Login como admin
-2. Ve a "⚙️ Administración" → "📋 Tareas"
-3. Haz clic en "➕ Nueva Tarea"
-4. Crea tarea "Prueba Sistema"
-5. Verifica que aparece en la lista
-6. Desactiva la tarea
-7. Verifica que cambia el estado a "Inactiva"
+1. **Accede a la aplicación:** http://localhost:5173
+2. **Login como Admin:**
+   - Usuario: `Admin Sistema`
+   - Contraseña: `admin123`
+   - ✅ Deberías ver badge **🔴 ADMIN** en rojo
+   - ✅ Aparece el tab **"⚙️ Administración"**
+3. **Cierra sesión**
+4. **Login como Responsable:**
+   - Usuario: `Pedro Sánchez`
+   - Contraseña: `pedro123`
+   - ✅ Badge **🟡 RESPONSABLE** en amarillo
+   - ✅ **IMPORTANTE:** También aparece el tab **"⚙️ Administración"**
+5. **Cierra sesión**
+6. **Login como Empleado:**
+   - Usuario: `Juan García`
+   - Contraseña: `juan123`
+   - ✅ Badge **🟢 EMPLEADO** en verde
+   - ❌ **NO** aparece el tab Administración
 
-### Test 3: Gestión de Empleados (Solo Admin)
-1. En Administración → "👥 Empleados"
-2. Haz clic en "➕ Nuevo Empleado"
-3. Crea empleado: "Test User", rol "Empleado", password "test123"
-4. Verifica que aparece en la lista
-5. Usa filtros: selecciona rol "Empleado"
-6. Edita el empleado creado
+**✅ Resultado esperado:** Admin y Responsable tienen acceso a Administración, Empleado NO.
 
-### Test 4: Registro de Horas
-1. Login como empleado (juan123)
-2. Ve a "📅 Calendario"
-3. Haz clic en el día actual
-4. Agrega entrada: Tarea "Limpieza", 2 horas
-5. Verifica que aparece en el calendario
+### ✅ Test 2: Gestión de Tareas - 3 min (Admin o Responsable)
 
-### Test 5: Reportes y Exportación
-1. Login como responsable (pedro123)
-2. Ve a "📊 Resumen"
-3. Configura filtros:
-   - Fecha inicio: primer día del mes
-   - Fecha fin: último día del mes
-4. Prueba los tres modos de vista:
-   - Por Empleado
-   - Por Tarea
-   - Por Período
-5. Exporta a Excel → Verifica que descarga el archivo
-6. Exporta a PDF → Verifica el formato
-7. Exporta a CSV → Abre en Excel y verifica acentos
+1. **Login como responsable:** `pedro123`
+2. **Ve a "⚙️ Administración"** → **"📋 Tareas"**
+3. **Haz clic en "➕ Nueva Tarea"**
+4. **Completa el formulario:**
+   - Nombre: `Prueba Sistema`
+   - Activa: ☑️ Sí
+5. **Clic en "Crear Tarea"**
+6. ✅ **Verifica que aparece en la lista**
+7. **Haz clic en "✏️" (editar)** en la tarea que creaste
+8. **Cambia el estado** a "Inactiva" (desmarca el checkbox)
+9. **Guarda cambios**
+10. ✅ **Verifica que el badge cambia a "Inactiva"** en rojo
+
+**✅ Resultado esperado:** Tanto Admin como Responsable pueden gestionar tareas.
+
+### ✅ Test 3: Gestión de Empleados - 3 min (**Solo Admin**)
+
+1. **Cierra sesión** y **login como Admin:** `admin123`
+2. **Ve a Administración** → **"👥 Empleados"**
+3. **Haz clic en "➕ Nuevo Empleado"**
+4. **Completa el formulario:**
+   - Nombre: `Test User`
+   - Rol: `Empleado`
+   - Contraseña: `test123`
+5. **Clic en "Crear Empleado"**
+6. ✅ **Verifica que aparece en la lista**
+7. **Usa los filtros:** Selecciona rol "Empleado"
+8. **Haz clic en "✏️"** en el empleado creado
+9. **Prueba editar** el nombre y guardar cambios
+
+**✅ Resultado esperado:** Solo Admin puede gestionar empleados. Responsable NO ve esta opción.
+
+### ✅ Test 4: Registro de Horas - 2 min
+
+1. **Login como empleado:** `juan123`
+2. **Ve a "📅 Calendario"**
+3. **Haz clic en el día actual**
+4. **Agrega entrada de tiempo:**
+   - Tarea: `Limpieza`
+   - Horas: `2`
+5. **Guarda la entrada**
+6. ✅ **Verifica que aparece en el calendario** con el color de la tarea
+
+**✅ Resultado esperado:** Empleado puede registrar solo sus propias horas.
+
+### ✅ Test 5: Reportes y Exportación - 5 min (Admin o Responsable)
+
+1. **Login como responsable:** `pedro123`
+2. **Ve a "📊 Resumen"**
+3. **Configura filtros de fecha:**
+   - Fecha inicio: Primer día del mes actual
+   - Fecha fin: Último día del mes actual
+4. **Prueba los TRES modos de vista:**
+   - 👤 **Por Empleado:** Horas totales agrupadas por empleado
+   - 📋 **Por Tarea:** Horas totales agrupadas por tarea
+   - 📅 **Por Período:** Horas diarias por empleado
+5. **Exporta a Excel** (📊 Botón verde):
+   - ✅ Verifica que descarga archivo `.xlsx`
+   - ✅ Abre en Excel y verifica formato con bordes y colores
+6. **Exporta a PDF** (📄 Botón rojo):
+   - ✅ Verifica que descarga archivo `.pdf`  
+   - ✅ Abre y verifica tabla formateada
+7. **Exporta a CSV** (📁 Botón azul):
+   - ✅ Verifica que descarga archivo `.csv`
+   - ✅ Abre en Excel y verifica que los acentos se ven correctamente
+
+**✅ Resultado esperado:** Admin y Responsable pueden ver datos de todos y exportar. Empleado NO ve esta vista.
 
 ---
 
@@ -208,13 +250,19 @@ La aplicación estará disponible en: http://localhost:5173
 2. Limpia caché: `rm -rf node_modules package-lock.json && npm install`
 3. Revisa la consola del navegador para mensajes de error específicos
 
-### Problema: No puedo acceder a Administración
+### ❌ Problema: No puedo acceder a Administración
 **Síntoma:** No aparece el tab "⚙️ Administración"
 
 **Solución:**
-1. Verifica que estás logueado con un usuario admin
-2. Confirma en la base de datos que el usuario tiene `role = 'admin'`
-3. Cierra sesión y vuelve a entrar
+1. ✅ **Verifica tu rol:** Solo usuarios con rol `admin` o `responsible` pueden acceder
+2. **Comprueba en Supabase:**
+   - Ve al SQL Editor
+   - Ejecuta: `SELECT name, role FROM employees WHERE name = 'Tu Nombre';`
+   - Debe retornar `admin` o `responsible`
+3. **Si eres empleado (role = 'employee'):** NO tendrás acceso a Administración (es correcto)
+4. **Cierra sesión y vuelve a entrar** para refrescar permisos
+
+**⚠️ IMPORTANTE:** Con el cambio reciente, los responsables **SÍ** tienen acceso a Administración para gestionar tareas.
 
 ### Problema: Las tareas creadas no aparecen en dropdowns
 **Síntoma:** Nuevas tareas no se muestran al registrar horas

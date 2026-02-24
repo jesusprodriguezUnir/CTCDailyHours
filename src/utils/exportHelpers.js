@@ -2,6 +2,9 @@ import * as XLSX from 'xlsx'
 import jsPDF from 'jspdf'
 import 'jspdf-autotable'
 
+// Nota: jspdf-autotable se añade automáticamente al prototipo de jsPDF
+// cuando se importa, por lo que doc.autoTable() estará disponible
+
 /**
  * Exporta datos a formato Excel (.xlsx)
  * @param {Array} data - Datos a exportar (array de objetos)
@@ -51,9 +54,18 @@ export function exportToExcel(data, filename = 'reporte', sheetName = 'Datos') {
  */
 export function exportToPDF(data, filename = 'reporte', title = 'Reporte de Horas', options = {}) {
   try {
+    if (!data || data.length === 0) {
+      console.error('No hay datos para exportar a PDF')
+      return { success: false, error: 'No hay datos para exportar' }
+    }
+
     // Configuración por defecto
     const orientation = options.orientation || 'landscape'
-    const doc = new jsPDF(orientation, 'mm', 'a4')
+    const doc = new jsPDF({
+      orientation: orientation,
+      unit: 'mm',
+      format: 'a4'
+    })
     
     // Título del documento
     doc.setFontSize(16)
@@ -83,6 +95,7 @@ export function exportToPDF(data, filename = 'reporte', title = 'Reporte de Hora
       }))
       
       // Generar tabla con autoTable
+      // Nota: jspdf-autotable se importa con 'import jspdf-autotable' y extiende automáticamente jsPDF
       doc.autoTable({
         startY: 28,
         columns: columns,
@@ -96,7 +109,9 @@ export function exportToPDF(data, filename = 'reporte', title = 'Reporte de Hora
         },
         styles: {
           fontSize: 9,
-          cellPadding: 3
+          cellPadding: 3,
+          overflow: 'linebreak',
+          cellWidth: 'auto'
         },
         alternateRowStyles: {
           fillColor: [245, 247, 250]
