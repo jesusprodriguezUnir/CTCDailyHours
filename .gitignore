@@ -30,3 +30,6 @@ lerna-debug.log*
 .env
 .env.local
 .env.*.local
+# Permitir archivos de enviroment para producción
+!.env.production
+!.env.staging
