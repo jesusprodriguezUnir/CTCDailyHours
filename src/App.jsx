@@ -9,7 +9,7 @@ import { useTimeEntries } from './hooks/useTimeEntries'
 function App() {
   const [user, setUser] = useState(null)
   const [activeView, setActiveView] = useState('calendar')
-  const { entries, loading, addEntry, updateEntry, deleteEntry } = useTimeEntries()
+  const { entries, loading, addEntry, updateEntry, deleteEntry } = useTimeEntries(null, user)
 
   const isResponsible = user?.role === 'responsible'
   const isAdmin = user?.role === 'admin'

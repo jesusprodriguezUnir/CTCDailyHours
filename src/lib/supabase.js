@@ -23,7 +23,7 @@ export async function fetchEmployees() {
   return data
 }
 
-export async function fetchTimeEntries(date = null) {
+export async function fetchTimeEntries(date = null, employeeId = null) {
   let query = supabase
     .from('time_entries')
     .select(`
@@ -35,6 +35,10 @@ export async function fetchTimeEntries(date = null) {
 
   if (date) {
     query = query.eq('date', date)
+  }
+
+  if (employeeId) {
+    query = query.eq('employee_id', employeeId)
   }
 
   const { data, error } = await query
