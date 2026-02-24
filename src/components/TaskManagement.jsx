@@ -54,6 +54,12 @@ export function TaskManagement() {
       return
     }
 
+    const parsedCustomerId = isCustomerService && customerId ? parseInt(customerId, 10) : null
+    if (parsedCustomerId !== null && isNaN(parsedCustomerId)) {
+      setMessage({ type: 'error', text: 'El ID del cliente no es válido' })
+      return
+    }
+
     setSaving(true)
     setMessage(null)
 
@@ -63,13 +69,13 @@ export function TaskManagement() {
         result = await updateTask(editingTask.id, {
           name: taskName.trim(),
           is_customer_service: isCustomerService,
-          customer_id: isCustomerService && customerId ? parseInt(customerId) : null
+          customer_id: parsedCustomerId
         })
       } else {
         result = await addTask({
           name: taskName.trim(),
           is_customer_service: isCustomerService,
-          customer_id: isCustomerService && customerId ? parseInt(customerId) : null
+          customer_id: parsedCustomerId
         })
       }
 
