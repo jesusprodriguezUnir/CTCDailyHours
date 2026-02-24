@@ -73,6 +73,8 @@ export async function fetchCustomers() {
 }
 
 export async function fetchTimeEntries(date = null, employeeId = null) {
+  // The employee->department->work_center and task->customer joins are required
+  // for export functions (exportHelpers.js) to populate Centro, Departamento and Cliente fields.
   let query = supabase
     .from('time_entries')
     .select(`
