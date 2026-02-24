@@ -61,11 +61,7 @@ export function WeeklyCalendar({
   }, [filteredEntries, weekDays])
 
   const getTaskName = (taskId) => {
-<<<<<<< HEAD
-    const task = tasks.find(t => t.id === taskId)
-=======
     const task = tasks?.find(t => t.id === taskId)
->>>>>>> origin/main
     return task?.name || 'Desconocida'
   }
 
@@ -288,7 +284,6 @@ export function WeeklyCalendar({
                   className="w-full p-3 border-2 border-gray-300 rounded-lg"
                 >
                   <option value="">-- Seleccionar --</option>
-<<<<<<< HEAD
                   {(tasks || []).map(t => (
                     <option key={t.id} value={t.id}>{t.name}</option>
                   ))}
