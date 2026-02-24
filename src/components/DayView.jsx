@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react'
 import { useEmployees } from '../hooks/useEmployees'
-import { TASKS, TIME_INCREMENTS } from '../data/mockData'
+import { useTasks } from '../hooks/useTasks'
+import { TIME_INCREMENTS } from '../data/mockData'
 import { TimeEntryRow } from './TimeEntryRow'
 
 const DAYS = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
@@ -17,6 +18,7 @@ export function DayView({
   isResponsible 
 }) {
   const { employees } = useEmployees()
+  const { tasks } = useTasks()
   const [selectedEmployeeId, setSelectedEmployeeId] = useState(
     isResponsible ? '' : user?.id
   )
@@ -43,7 +45,7 @@ export function DayView({
   const totalHours = filteredEntries.reduce((sum, e) => sum + (e.hours || 0), 0)
 
   const getTaskName = (taskId) => {
-    const task = TASKS.find(t => t.id === taskId)
+    const task = tasks.find(t => t.id === taskId)
     return task?.name || 'Desconocida'
   }
 
@@ -132,7 +134,7 @@ export function DayView({
                   className="w-full p-3 border rounded-lg"
                 >
                   <option value="">-- Seleccionar --</option>
-                  {TASKS.map(t => (
+                  {tasks.map(t => (
                     <option key={t.id} value={t.id}>{t.name}</option>
                   ))}
                 </select>
@@ -195,6 +197,7 @@ export function DayView({
                     key={entry.id}
                     entry={entry}
                     taskName={getTaskName(entry.task_id)}
+                    tasks={tasks}
                     onUpdate={onUpdate}
                     onDelete={onDelete}
                     canEdit={canEdit}

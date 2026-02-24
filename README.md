@@ -434,7 +434,32 @@ CREATE INDEX idx_tasks_active ON tasks(active);
 3. **time_entries** - Registro de horas
    - id, employee_id, task_id, date, hours
 
-## 📈 Futuras Mejoras
+## � Documentación Completa
+
+Para información detallada sobre el uso y desarrollo del sistema, consulta la documentación completa en la carpeta `docs/`:
+
+- **[Manual de Usuario](docs/MANUAL_USUARIO.md)** 📖 - Guía funcional completa para empleados, responsables y administradores
+  - Proceso de login y navegación
+  - Registro y gestión de horas
+  - Generación de reportes y exportaciones
+  - Preguntas frecuentes y solución de problemas
+
+- **[Manual Técnico](docs/MANUAL_TECNICO.md)** 🔧 - Documentación para desarrolladores
+  - Arquitectura del sistema
+  - Stack tecnológico detallado
+  - Estructura de componentes y hooks
+  - API y servicios de Supabase
+  - Guía de deployment y mantenimiento
+
+- **[Arquitectura](docs/ARQUITECTURA.md)** 🏗️ - Diagramas y documentación visual
+  - Diagramas Mermaid de arquitectura
+  - Diagrama ERD de base de datos
+  - Flujos de datos y secuencias
+  - Patrones de diseño utilizados
+
+Todos los documentos están en formato Markdown y pueden exportarse a PDF usando [Pandoc](https://pandoc.org/) o la extensión [Markdown PDF](https://marketplace.visualstudio.com/items?itemName=yzane.markdown-pdf) de VS Code.
+
+## �📈 Futuras Mejoras
 
 - [ ] Sistema de aprobación de horas por responsables
 - [ ] Gráficas interactivas de productividad

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { fetchTimeEntries, createTimeEntry } from '../lib/supabase'
+import { supabase, fetchTimeEntries, createTimeEntry } from '../lib/supabase'
 
 const USE_MOCK = false
 

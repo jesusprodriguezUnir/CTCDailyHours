@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useTasks } from '../hooks/useTasks'
+import { useCustomers } from '../hooks/useCustomers'
 
 export function TaskManagement() {
   const {
@@ -15,9 +16,12 @@ export function TaskManagement() {
   const [showModal, setShowModal] = useState(false)
   const [editingTask, setEditingTask] = useState(null)
   const [taskName, setTaskName] = useState('')
+  const [isCustomerService, setIsCustomerService] = useState(false)
+  const [customerId, setCustomerId] = useState('')
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState(null)
   const [showAll, setShowAll] = useState(true)
+  const { customers } = useCustomers()
 
   // Cargar todas las tareas (incluyendo inactivas)
   useEffect(() => {
@@ -27,6 +31,8 @@ export function TaskManagement() {
   const handleOpenModal = (task = null) => {
     setEditingTask(task)
     setTaskName(task?.name || '')
+    setIsCustomerService(Boolean(task?.is_customer_service))
+    setCustomerId(task?.customer_id ? String(task.customer_id) : '')
     setShowModal(true)
     setMessage(null)
   }
@@ -35,6 +41,8 @@ export function TaskManagement() {
     setShowModal(false)
     setEditingTask(null)
     setTaskName('')
+    setIsCustomerService(false)
+    setCustomerId('')
     setMessage(null)
   }
 
@@ -52,9 +60,17 @@ export function TaskManagement() {
     try {
       let result
       if (editingTask) {
-        result = await updateTask(editingTask.id, { name: taskName.trim() })
+        result = await updateTask(editingTask.id, {
+          name: taskName.trim(),
+          is_customer_service: isCustomerService,
+          customer_id: isCustomerService && customerId ? parseInt(customerId) : null
+        })
       } else {
-        result = await addTask(taskName.trim())
+        result = await addTask({
+          name: taskName.trim(),
+          is_customer_service: isCustomerService,
+          customer_id: isCustomerService && customerId ? parseInt(customerId) : null
+        })
       }
 
       if (result.success) {
@@ -147,6 +163,12 @@ export function TaskManagement() {
                 Nombre
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Asistencia
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Cliente
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Estado
               </th>
               <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -157,7 +179,7 @@ export function TaskManagement() {
           <tbody className="bg-white divide-y divide-gray-200">
             {filteredTasks.length === 0 ? (
               <tr>
-                <td colSpan="3" className="px-6 py-4 text-center text-gray-500">
+                <td colSpan="5" className="px-6 py-4 text-center text-gray-500">
                   No hay tareas para mostrar
                 </td>
               </tr>
@@ -166,6 +188,20 @@ export function TaskManagement() {
                 <tr key={task.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm font-medium text-gray-900">{task.name}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                      task.is_customer_service
+                        ? 'bg-indigo-100 text-indigo-800'
+                        : 'bg-gray-100 text-gray-800'
+                    }`}>
+                      {task.is_customer_service ? 'Si' : 'No'}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-700">
+                      {task.customer?.name || 'N/A'}
+                    </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
@@ -229,6 +265,43 @@ export function TaskManagement() {
                   disabled={saving}
                   autoFocus
                 />
+              </div>
+
+              <div className="mb-4">
+                <label className="flex items-center gap-2 text-sm text-gray-700">
+                  <input
+                    type="checkbox"
+                    checked={isCustomerService}
+                    onChange={(e) => {
+                      const checked = e.target.checked
+                      setIsCustomerService(checked)
+                      if (!checked) {
+                        setCustomerId('')
+                      }
+                    }}
+                    className="rounded"
+                  />
+                  Es asistencia al cliente
+                </label>
+              </div>
+
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Cliente (opcional)
+                </label>
+                <select
+                  value={customerId}
+                  onChange={(e) => setCustomerId(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  disabled={saving || !isCustomerService}
+                >
+                  <option value="">-- Sin cliente --</option>
+                  {customers.map(customer => (
+                    <option key={customer.id} value={customer.id}>
+                      {customer.name}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div className="flex justify-end gap-3">

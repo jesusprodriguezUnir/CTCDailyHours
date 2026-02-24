@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { TASKS, TIME_INCREMENTS } from '../data/mockData'
+import { TIME_INCREMENTS } from '../data/mockData'
 import { useTimeEntries } from '../hooks/useTimeEntries'
+import { useTasks } from '../hooks/useTasks'
 
 export function TimeEntryForm({ user, onBack }) {
   const [taskId, setTaskId] = useState('')
@@ -8,6 +9,7 @@ export function TimeEntryForm({ user, onBack }) {
   const [saving, setSaving] = useState(false)
   const [success, setSuccess] = useState(false)
   const { addEntry } = useTimeEntries()
+  const { tasks, loading: loadingTasks } = useTasks()
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -63,12 +65,15 @@ export function TimeEntryForm({ user, onBack }) {
             className="w-full p-4 text-lg border-2 border-gray-300 rounded-xl focus:border-blue-600 focus:outline-none bg-white"
           >
             <option value="">-- Seleccionar --</option>
-            {TASKS.map(task => (
+            {tasks.map(task => (
               <option key={task.id} value={task.id}>
                 {task.name}
               </option>
             ))}
           </select>
+          {loadingTasks && (
+            <p className="text-sm text-gray-500 mt-2">Cargando tareas...</p>
+          )}
         </div>
 
         <div>

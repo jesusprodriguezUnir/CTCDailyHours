@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useEmployeeManagement } from '../hooks/useEmployeeManagement'
+import { useDepartments } from '../hooks/useDepartments'
 
 function getPasswordStrength(password) {
   if (!password) return null
@@ -36,6 +37,7 @@ export function EmployeeManagement() {
     toggleEmployeeActive,
     fetchEmployees
   } = useEmployeeManagement()
+  const { departments } = useDepartments()
 
   const [employees, setEmployees] = useState([])
   const [showModal, setShowModal] = useState(false)
@@ -43,7 +45,8 @@ export function EmployeeManagement() {
   const [formData, setFormData] = useState({
     name: '',
     role: 'employee',
-    password: ''
+    password: '',
+    department_id: ''
   })
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState(null)
@@ -69,7 +72,8 @@ export function EmployeeManagement() {
     setFormData({
       name: employee?.name || '',
       role: employee?.role || 'employee',
-      password: '' // No mostrar contraseña actual
+      password: '', // No mostrar contraseña actual
+      department_id: employee?.department_id || employee?.department?.id || ''
     })
     setShowModal(true)
     setMessage(null)
@@ -78,7 +82,7 @@ export function EmployeeManagement() {
   const handleCloseModal = () => {
     setShowModal(false)
     setEditingEmployee(null)
-    setFormData({ name: '', role: 'employee', password: '' })
+    setFormData({ name: '', role: 'employee', password: '', department_id: '' })
     setMessage(null)
   }
 
@@ -100,6 +104,11 @@ export function EmployeeManagement() {
       return
     }
 
+    if (!formData.department_id) {
+      setMessage({ type: 'error', text: 'El departamento es requerido' })
+      return
+    }
+
     setSaving(true)
     setMessage(null)
 
@@ -109,14 +118,20 @@ export function EmployeeManagement() {
         // Al editar, solo incluir contraseña si se proporcionó una nueva
         const updates = {
           name: formData.name.trim(),
-          role: formData.role
+          role: formData.role,
+          department_id: parseInt(formData.department_id)
         }
         if (formData.password) {
           updates.password = formData.password
         }
         result = await updateEmployee(editingEmployee.id, updates)
       } else {
-        result = await addEmployee(formData.name.trim(), formData.role, formData.password)
+        result = await addEmployee(
+          formData.name.trim(),
+          formData.role,
+          formData.password,
+          parseInt(formData.department_id)
+        )
       }
 
       if (result.success) {
@@ -251,6 +266,12 @@ export function EmployeeManagement() {
                 Nombre
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Centro
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Departamento
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Rol
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -264,13 +285,13 @@ export function EmployeeManagement() {
           <tbody className="bg-white divide-y divide-gray-200">
             {loading && employees.length === 0 ? (
               <tr>
-                <td colSpan="4" className="px-6 py-4 text-center text-gray-500">
+                <td colSpan="6" className="px-6 py-4 text-center text-gray-500">
                   Cargando empleados...
                 </td>
               </tr>
             ) : employees.length === 0 ? (
               <tr>
-                <td colSpan="4" className="px-6 py-4 text-center text-gray-500">
+                <td colSpan="6" className="px-6 py-4 text-center text-gray-500">
                   No hay empleados para mostrar
                 </td>
               </tr>
@@ -279,6 +300,16 @@ export function EmployeeManagement() {
                 <tr key={employee.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm font-medium text-gray-900">{employee.name}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-700">
+                      {employee.department?.work_center?.name || 'N/A'}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-700">
+                      {employee.department?.name || 'N/A'}
+                    </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getRoleBadgeColor(employee.role)}`}>
@@ -348,6 +379,26 @@ export function EmployeeManagement() {
                   disabled={saving}
                   autoFocus
                 />
+              </div>
+
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Departamento
+                </label>
+                <select
+                  name="department_id"
+                  value={formData.department_id}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  disabled={saving}
+                >
+                  <option value="">-- Seleccionar --</option>
+                  {departments.map(dept => (
+                    <option key={dept.id} value={dept.id}>
+                      {dept.work_center?.name ? `${dept.work_center.name} - ` : ''}{dept.name}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div className="mb-4">

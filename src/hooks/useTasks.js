@@ -13,7 +13,10 @@ export function useTasks() {
     try {
       let query = supabase
         .from('tasks')
-        .select('*')
+        .select(`
+          *,
+          customer:customers(id, name, code)
+        `)
         .order('name')
       
       // Por defecto, solo mostrar tareas activas
@@ -39,20 +42,22 @@ export function useTasks() {
   }, [fetchTasks])
 
   // Agregar nueva tarea
-  const addTask = async (name) => {
+  const addTask = async ({ name, is_customer_service = false, customer_id = null }) => {
     setError(null)
     try {
       const { data, error: insertError } = await supabase
         .from('tasks')
-        .insert([{ name, active: true }])
+        .insert([{
+          name,
+          is_customer_service,
+          customer_id,
+          active: true
+        }])
         .select()
       
       if (insertError) throw insertError
       
-      // Actualizar el estado local
-      if (data && data.length > 0) {
-        setTasks(prev => [...prev, data[0]].sort((a, b) => a.name.localeCompare(b.name)))
-      }
+      await fetchTasks(true)
       
       return { success: true, data: data[0] }
     } catch (err) {
@@ -74,13 +79,7 @@ export function useTasks() {
       
       if (updateError) throw updateError
       
-      // Actualizar el estado local
-      if (data && data.length > 0) {
-        setTasks(prev => 
-          prev.map(task => task.id === id ? data[0] : task)
-            .sort((a, b) => a.name.localeCompare(b.name))
-        )
-      }
+      await fetchTasks(true)
       
       return { success: true, data: data[0] }
     } catch (err) {

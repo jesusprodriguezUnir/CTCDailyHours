@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import { useEmployees } from '../hooks/useEmployees'
-import { TASKS, TIME_INCREMENTS } from '../data/mockData'
+import { useTasks } from '../hooks/useTasks'
 
 const DAYS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
 
@@ -13,6 +13,7 @@ export function WeeklyCalendar({
   isResponsible 
 }) {
   const { employees } = useEmployees()
+  const { tasks } = useTasks()
   const [currentWeekStart, setCurrentWeekStart] = useState(() => {
     const today = new Date()
     const day = today.getDay()
@@ -59,7 +60,7 @@ export function WeeklyCalendar({
   }, [filteredEntries, weekDays])
 
   const getTaskName = (taskId) => {
-    const task = TASKS.find(t => t.id === taskId)
+    const task = tasks.find(t => t.id === taskId)
     return task?.name || 'Desconocida'
   }
 
@@ -282,7 +283,7 @@ export function WeeklyCalendar({
                   className="w-full p-3 border-2 border-gray-300 rounded-lg"
                 >
                   <option value="">-- Seleccionar --</option>
-                  {TASKS.map(t => (
+                  {tasks.map(t => (
                     <option key={t.id} value={t.id}>{t.name}</option>
                   ))}
                 </select>

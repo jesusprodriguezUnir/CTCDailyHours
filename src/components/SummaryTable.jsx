@@ -2,6 +2,8 @@ import { useState, useMemo, useEffect } from 'react'
 import { useTimeEntries } from '../hooks/useTimeEntries'
 import { useEmployees } from '../hooks/useEmployees'
 import { useTasks } from '../hooks/useTasks'
+import { useWorkCenters } from '../hooks/useWorkCenters'
+import { useDepartments } from '../hooks/useDepartments'
 import { 
   exportToExcel, 
   exportToPDF, 
@@ -16,6 +18,8 @@ export function SummaryTable({ user, isResponsible, isAdmin }) {
   const { entries, loading: loadingEntries } = useTimeEntries(null, user)
   const { employees, loading: loadingEmployees } = useEmployees()
   const { tasks, loading: loadingTasks } = useTasks()
+  const { workCenters, loading: loadingCenters } = useWorkCenters()
+  const { departments, loading: loadingDepartments } = useDepartments()
   
   const [viewMode, setViewMode] = useState('employee') // 'employee', 'task', 'period'
   const [dateRange, setDateRange] = useState({
@@ -24,6 +28,8 @@ export function SummaryTable({ user, isResponsible, isAdmin }) {
   })
   const [selectedEmployees, setSelectedEmployees] = useState([])
   const [selectedTasks, setSelectedTasks] = useState([])
+  const [selectedCenters, setSelectedCenters] = useState([])
+  const [selectedDepartments, setSelectedDepartments] = useState([])
   const [message, setMessage] = useState(null)
 
   // Inicializar fechas con el mes actual
@@ -65,15 +71,31 @@ export function SummaryTable({ user, isResponsible, isAdmin }) {
       filtered = filtered.filter(e => selectedTasks.includes(e.task_id))
     }
 
+    // Filtrar por centros de trabajo
+    if (selectedCenters.length > 0) {
+      filtered = filtered.filter(e => {
+        const centerId = e.employee?.department?.work_center?.id
+        return centerId && selectedCenters.includes(centerId)
+      })
+    }
+
+    // Filtrar por departamentos
+    if (selectedDepartments.length > 0) {
+      filtered = filtered.filter(e => {
+        const departmentId = e.employee?.department?.id
+        return departmentId && selectedDepartments.includes(departmentId)
+      })
+    }
+
     return filtered
-  }, [entries, dateRange, selectedEmployees, selectedTasks, user, isResponsible, isAdmin])
+  }, [entries, dateRange, selectedEmployees, selectedTasks, selectedCenters, selectedDepartments, user, isResponsible, isAdmin])
 
   // Enriquecer entradas con información de empleado y tarea
   const enrichedEntries = useMemo(() => {
     return filteredEntries.map(entry => ({
       ...entry,
-      employee: employees.find(e => e.id === entry.employee_id),
-      task: tasks.find(t => t.id === entry.task_id)
+      employee: entry.employee || employees.find(e => e.id === entry.employee_id),
+      task: entry.task || tasks.find(t => t.id === entry.task_id)
     }))
   }, [filteredEntries, employees, tasks])
 
@@ -148,7 +170,11 @@ export function SummaryTable({ user, isResponsible, isAdmin }) {
     return summary.reduce((sum, row) => sum + (row['Total Horas'] || 0), 0)
   }, [summary])
 
-  const loading = loadingEntries || loadingEmployees || loadingTasks
+  const loading = loadingEntries || loadingEmployees || loadingTasks || loadingCenters || loadingDepartments
+
+  const visibleDepartments = selectedCenters.length > 0
+    ? departments.filter(dept => selectedCenters.includes(dept.work_center_id))
+    : departments
 
   if (loading) {
     return (
@@ -241,6 +267,53 @@ export function SummaryTable({ user, isResponsible, isAdmin }) {
               ))}
             </select>
           </div>
+
+          {/* Filtro de centros */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Centros ({selectedCenters.length > 0 ? selectedCenters.length : 'Todos'})
+            </label>
+            <select
+              multiple
+              value={selectedCenters}
+              onChange={(e) => {
+                const values = Array.from(e.target.selectedOptions, option => parseInt(option.value))
+                setSelectedCenters(values)
+                if (values.length === 0) {
+                  setSelectedDepartments([])
+                }
+              }}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              size="4"
+            >
+              {workCenters.map(center => (
+                <option key={center.id} value={center.id}>{center.name}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Filtro de departamentos */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Departamentos ({selectedDepartments.length > 0 ? selectedDepartments.length : 'Todos'})
+            </label>
+            <select
+              multiple
+              value={selectedDepartments}
+              onChange={(e) => {
+                const values = Array.from(e.target.selectedOptions, option => parseInt(option.value))
+                setSelectedDepartments(values)
+              }}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              size="6"
+            >
+              {visibleDepartments.map(dept => (
+                <option key={dept.id} value={dept.id}>
+                  {dept.work_center?.name ? `${dept.work_center.name} - ` : ''}{dept.name}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
 
         {/* Botones de limpiar filtros */}
@@ -259,6 +332,25 @@ export function SummaryTable({ user, isResponsible, isAdmin }) {
               className="text-sm text-blue-600 hover:underline"
             >
               Limpiar tareas
+            </button>
+          )}
+          {selectedCenters.length > 0 && (
+            <button
+              onClick={() => {
+                setSelectedCenters([])
+                setSelectedDepartments([])
+              }}
+              className="text-sm text-blue-600 hover:underline"
+            >
+              Limpiar centros
+            </button>
+          )}
+          {selectedDepartments.length > 0 && (
+            <button
+              onClick={() => setSelectedDepartments([])}
+              className="text-sm text-blue-600 hover:underline"
+            >
+              Limpiar departamentos
             </button>
           )}
         </div>
