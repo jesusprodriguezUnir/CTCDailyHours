@@ -41,10 +41,7 @@ export function AdminPanel() {
                     }
                   `}
                 >
-                  <span className="flex items-center gap-2">
-                    <span>{tab.icon}</span>
-                    <span>{tab.label}</span>
-                  </span>
+                  {tab.label}
                 </button>
               ))}
             </nav>

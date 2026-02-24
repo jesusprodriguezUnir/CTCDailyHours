@@ -65,7 +65,7 @@ export function TimeEntryForm({ user, onBack }) {
             className="w-full p-4 text-lg border-2 border-gray-300 rounded-xl focus:border-blue-600 focus:outline-none bg-white"
           >
             <option value="">-- Seleccionar --</option>
-            {tasks.map(task => (
+            {(tasks || []).map(task => (
               <option key={task.id} value={task.id}>
                 {task.name}
               </option>
