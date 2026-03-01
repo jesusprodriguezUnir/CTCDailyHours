@@ -1,25 +1,22 @@
-import { useState, useEffect } from 'react'
-import { fetchDepartments } from '../lib/supabase'
+import { useQuery } from '@tanstack/react-query'
+import { fetchDepartments as fetchActiveDepartments } from '../lib/supabase'
 
 export function useDepartments(workCenterId = null) {
-  const [departments, setDepartments] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
-
-  useEffect(() => {
-    async function load() {
-      try {
-        const data = await fetchDepartments(workCenterId)
-        setDepartments(data)
-      } catch (err) {
-        setError(err.message)
-        setDepartments([])
-      } finally {
-        setLoading(false)
-      }
+  const {
+    data: departments = [],
+    isLoading: loading,
+    error: queryError
+  } = useQuery({
+    queryKey: ['departments', 'active', workCenterId],
+    queryFn: async () => {
+      const data = await fetchActiveDepartments(workCenterId)
+      return data || []
     }
-    load()
-  }, [workCenterId])
+  })
 
-  return { departments, loading, error }
+  return {
+    departments,
+    loading,
+    error: queryError ? queryError.message : null
+  }
 }

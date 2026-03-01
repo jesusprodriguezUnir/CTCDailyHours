@@ -1,25 +1,22 @@
-import { useState, useEffect } from 'react'
-import { fetchWorkCenters } from '../lib/supabase'
+import { useQuery } from '@tanstack/react-query'
+import { fetchWorkCenters as fetchActiveWorkCenters } from '../lib/supabase'
 
 export function useWorkCenters() {
-  const [workCenters, setWorkCenters] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
-
-  useEffect(() => {
-    async function load() {
-      try {
-        const data = await fetchWorkCenters()
-        setWorkCenters(data)
-      } catch (err) {
-        setError(err.message)
-        setWorkCenters([])
-      } finally {
-        setLoading(false)
-      }
+  const {
+    data: workCenters = [],
+    isLoading: loading,
+    error: queryError
+  } = useQuery({
+    queryKey: ['workCenters', 'active'],
+    queryFn: async () => {
+      const data = await fetchActiveWorkCenters()
+      return data || []
     }
-    load()
-  }, [])
+  })
 
-  return { workCenters, loading, error }
+  return {
+    workCenters,
+    loading,
+    error: queryError ? queryError.message : null
+  }
 }

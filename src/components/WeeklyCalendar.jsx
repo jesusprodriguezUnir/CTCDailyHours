@@ -5,13 +5,13 @@ import { TIME_INCREMENTS } from '../data/mockData'
 
 const DAYS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
 
-export function WeeklyCalendar({ 
-  entries = [], 
-  onAdd, 
-  onUpdate, 
-  onDelete, 
-  user, 
-  isResponsible 
+export function WeeklyCalendar({
+  entries = [],
+  onAdd,
+  onUpdate,
+  onDelete,
+  user,
+  isResponsible
 }) {
   const { employees } = useEmployees()
   const { tasks } = useTasks()
@@ -150,28 +150,28 @@ export function WeeklyCalendar({
 
   return (
     <div className="max-w-full">
-      <div className="bg-white rounded-xl shadow-lg p-4 mb-4">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-4 mb-4 transition-colors">
         <div className="flex justify-between items-center mb-4">
           <button
             onClick={prevWeek}
-            className="p-2 rounded-lg hover:bg-gray-100 text-xl font-bold"
+            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-xl font-bold dark:text-gray-100 transition-colors"
           >
             ‹
           </button>
           <div className="text-center">
-            <h2 className="text-xl font-bold text-gray-800">
+            <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 transition-colors">
               {DAYS[weekDays[0].getDay() === 0 ? 6 : weekDays[0].getDay() - 1]} {formatDisplayDate(weekDays[0])} - {DAYS[weekDays[6].getDay() === 0 ? 6 : weekDays[6].getDay() - 1]} {formatDisplayDate(weekDays[6])}
             </h2>
             <button
               onClick={goToToday}
-              className="text-sm text-blue-600 hover:underline"
+              className="text-sm text-blue-600 hover:underline dark:text-blue-400"
             >
               Hoy
             </button>
           </div>
           <button
             onClick={nextWeek}
-            className="p-2 rounded-lg hover:bg-gray-100 text-xl font-bold"
+            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-xl font-bold dark:text-gray-100 transition-colors"
           >
             ›
           </button>
@@ -182,7 +182,7 @@ export function WeeklyCalendar({
             <select
               value={selectedEmployeeId}
               onChange={(e) => setSelectedEmployeeId(e.target.value)}
-              className="w-full p-3 border-2 border-gray-300 rounded-lg bg-white"
+              className="w-full p-3 border-2 border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 dark:text-gray-100 transition-colors"
             >
               <option value="">-- Seleccionar empleado --</option>
               {employees
@@ -200,11 +200,11 @@ export function WeeklyCalendar({
           <div className="min-w-[700px]">
             <div className="grid grid-cols-7 gap-1 mb-2">
               {weekDays.map((day, i) => (
-                <div 
-                  key={i} 
+                <div
+                  key={i}
                   className={`
-                    text-center p-2 rounded-lg font-semibold
-                    ${isToday(day) ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'}
+                    text-center p-2 rounded-lg font-semibold transition-colors
+                    ${isToday(day) ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-200'}
                   `}
                 >
                   <div className="text-xs">{DAYS[i]}</div>
@@ -217,14 +217,14 @@ export function WeeklyCalendar({
               {weekDays.map((day, i) => {
                 const dateKey = formatDateKey(day)
                 const dayEntries = entriesByDay[dateKey] || []
-                
+
                 return (
-                  <div 
+                  <div
                     key={i}
                     onClick={() => handleCellClick(day)}
                     className={`
                       min-h-[200px] p-2 border-2 border-dashed rounded-lg cursor-pointer transition-colors
-                      ${isToday(day) ? 'border-blue-300 bg-blue-50' : 'border-gray-200 hover:border-gray-400'}
+                      ${isToday(day) ? 'border-blue-300 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-700' : 'border-gray-200 hover:border-gray-400 dark:border-gray-700 dark:hover:border-gray-500'}
                     `}
                   >
                     {dayEntries.map(entry => (
@@ -252,36 +252,36 @@ export function WeeklyCalendar({
           </div>
         </div>
 
-        <div className="mt-4 p-3 bg-gray-100 rounded-lg flex justify-between items-center">
-          <span className="text-gray-600">Total semana:</span>
-          <span className="text-xl font-bold text-blue-600">{getWeekTotal()} horas</span>
+        <div className="mt-4 p-3 bg-gray-100 dark:bg-gray-900 rounded-lg flex justify-between items-center transition-colors">
+          <span className="text-gray-600 dark:text-gray-300">Total semana:</span>
+          <span className="text-xl font-bold text-blue-600 dark:text-blue-400">{getWeekTotal()} horas</span>
         </div>
       </div>
 
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl p-6 w-full max-w-md">
-            <h3 className="text-xl font-bold mb-4">
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 w-full max-w-md transition-colors">
+            <h3 className="text-xl font-bold mb-4 dark:text-white">
               {modalData.type === 'add' ? '➕ Añadir Horas' : '✏️ Editar Horas'}
             </h3>
-            
+
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Fecha</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Fecha</label>
                 <input
                   type="date"
                   value={modalData.date}
                   disabled
-                  className="w-full p-3 border rounded-lg bg-gray-100"
+                  className="w-full p-3 border dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-700 dark:text-gray-200 transition-colors"
                 />
               </div>
-              
+
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Tarea</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tarea</label>
                 <select
                   value={newTaskId}
                   onChange={(e) => setNewTaskId(e.target.value)}
-                  className="w-full p-3 border-2 border-gray-300 rounded-lg"
+                  className="w-full p-3 border-2 border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 dark:text-gray-100 transition-colors"
                 >
                   <option value="">-- Seleccionar --</option>
                   {(tasks || []).map(t => (
@@ -291,11 +291,11 @@ export function WeeklyCalendar({
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Horas</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Horas</label>
                 <select
                   value={newHours}
                   onChange={(e) => setNewHours(e.target.value)}
-                  className="w-full p-3 border-2 border-gray-300 rounded-lg"
+                  className="w-full p-3 border-2 border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 dark:text-gray-100 transition-colors"
                 >
                   <option value="">-- Seleccionar --</option>
                   {TIME_INCREMENTS.map(h => (
@@ -323,7 +323,7 @@ export function WeeklyCalendar({
               )}
               <button
                 onClick={() => setShowModal(false)}
-                className="px-4 bg-gray-300 text-gray-700 py-3 rounded-lg font-semibold"
+                className="px-4 bg-gray-300 hover:bg-gray-400 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-700 dark:text-gray-200 py-3 rounded-lg font-semibold transition-colors"
               >
                 Cancelar
               </button>

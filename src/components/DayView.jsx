@@ -7,15 +7,15 @@ import { TimeEntryRow } from './TimeEntryRow'
 const DAYS = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
 const MONTHS = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
 
-export function DayView({ 
-  date, 
-  entries = [], 
-  onAdd, 
-  onUpdate, 
-  onDelete, 
-  user, 
+export function DayView({
+  date,
+  entries = [],
+  onAdd,
+  onUpdate,
+  onDelete,
+  user,
   onBack,
-  isResponsible 
+  isResponsible
 }) {
   const { employees } = useEmployees()
   const { tasks } = useTasks()
@@ -64,7 +64,7 @@ export function DayView({
 
   const downloadCSV = () => {
     const rows = [['Empleado', 'Tarea', 'Horas']]
-    
+
     filteredEntries.forEach(entry => {
       const emp = employeeMap[entry.employee_id]
       rows.push([
@@ -90,25 +90,25 @@ export function DayView({
     <div className="max-w-2xl mx-auto">
       <button
         onClick={onBack}
-        className="mb-4 text-blue-600 hover:underline flex items-center gap-1"
+        className="mb-4 text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 transition-colors"
       >
         ← Volver al calendario
       </button>
 
-      <div className="bg-white rounded-xl shadow-lg p-4 mb-4">
-        <h2 className="text-xl font-bold text-gray-800 mb-2">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-4 mb-4 transition-colors duration-200">
+        <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-2">
           📅 {dayName} {dayNum} de {monthName}
         </h2>
 
         {isResponsible && (
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Ver horas de:
             </label>
             <select
               value={selectedEmployeeId}
               onChange={(e) => setSelectedEmployeeId(e.target.value)}
-              className="w-full p-3 border-2 border-gray-300 rounded-lg bg-white"
+              className="w-full p-3 border-2 border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 dark:text-white transition-colors"
             >
               <option value="">-- Seleccionar empleado --</option>
               {employees
@@ -123,15 +123,15 @@ export function DayView({
         )}
 
         {showAddForm && selectedEmployeeId ? (
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
-            <h3 className="font-semibold mb-3">➕ Añadir Tarea</h3>
+          <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4 mb-4 transition-colors">
+            <h3 className="font-semibold mb-3 dark:text-green-400">➕ Añadir Tarea</h3>
             <div className="space-y-3">
               <div>
-                <label className="block text-sm text-gray-600 mb-1">Tarea</label>
+                <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">Tarea</label>
                 <select
                   value={newTaskId}
                   onChange={(e) => setNewTaskId(e.target.value)}
-                  className="w-full p-3 border rounded-lg"
+                  className="w-full p-3 border dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 dark:text-white transition-colors"
                 >
                   <option value="">-- Seleccionar --</option>
                   {tasks.map(t => (
@@ -140,11 +140,11 @@ export function DayView({
                 </select>
               </div>
               <div>
-                <label className="block text-sm text-gray-600 mb-1">Horas</label>
+                <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">Horas</label>
                 <select
                   value={newHours}
                   onChange={(e) => setNewHours(e.target.value)}
-                  className="w-full p-3 border rounded-lg"
+                  className="w-full p-3 border dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 dark:text-white transition-colors"
                 >
                   <option value="">-- Seleccionar --</option>
                   {TIME_INCREMENTS.map(h => (
@@ -156,13 +156,13 @@ export function DayView({
                 <button
                   onClick={handleAdd}
                   disabled={!newTaskId || !newHours}
-                  className="flex-1 bg-green-600 text-white py-2 rounded-lg font-semibold disabled:bg-gray-300"
+                  className="flex-1 bg-green-600 text-white py-2 rounded-lg font-semibold disabled:bg-gray-400 disabled:dark:bg-gray-600 hover:bg-green-700 transition-colors"
                 >
                   Guardar
                 </button>
                 <button
                   onClick={() => setShowAddForm(false)}
-                  className="px-4 bg-gray-300 text-gray-700 py-2 rounded-lg font-semibold"
+                  className="px-4 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200 py-2 rounded-lg font-semibold hover:bg-gray-400 dark:hover:bg-gray-500 transition-colors"
                 >
                   Cancelar
                 </button>
@@ -183,7 +183,7 @@ export function DayView({
         {filteredEntries.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-gray-100">
+              <thead className="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 transition-colors">
                 <tr>
                   <th className="p-3 text-left font-semibold">Tarea</th>
                   <th className="p-3 text-center font-semibold w-20">Horas</th>
@@ -191,7 +191,7 @@ export function DayView({
                   <th className="p-3 text-center font-semibold w-16">Borrar</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="dark:text-gray-200">
                 {filteredEntries.map(entry => (
                   <TimeEntryRow
                     key={entry.id}
@@ -204,7 +204,7 @@ export function DayView({
                   />
                 ))}
               </tbody>
-              <tfoot className="bg-gray-200 font-bold">
+              <tfoot className="bg-gray-200 dark:bg-gray-900 font-bold dark:text-gray-200 transition-colors">
                 <tr>
                   <td className="p-3">TOTAL</td>
                   <td className="p-3 text-center text-lg">{totalHours}</td>
@@ -214,7 +214,7 @@ export function DayView({
             </table>
           </div>
         ) : (
-          <p className="text-center text-gray-500 py-8">
+          <p className="text-center text-gray-500 dark:text-gray-400 py-8">
             No hay horas registradas para este día
           </p>
         )}

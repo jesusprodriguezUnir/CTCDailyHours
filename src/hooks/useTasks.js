@@ -1,16 +1,18 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'
 
-export function useTasks() {
-  const [tasks, setTasks] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
+export function useTasks(includeInactive = false) {
+  const queryClient = useQueryClient()
 
-  // Cargar todas las tareas (incluyendo inactivas para administración)
-  const fetchTasks = useCallback(async (includeInactive = false) => {
-    setLoading(true)
-    setError(null)
-    try {
+  // 1. Fetching con useQuery
+  const {
+    data: tasks = [],
+    isLoading: loading,
+    error: queryError,
+    refetch: refresh
+  } = useQuery({
+    queryKey: ['tasks', includeInactive],
+    queryFn: async () => {
       let query = supabase
         .from('tasks')
         .select(`
@@ -18,155 +20,125 @@ export function useTasks() {
           customer:customers(id, name, code)
         `)
         .order('name')
-      
-      // Por defecto, solo mostrar tareas activas
+
       if (!includeInactive) {
         query = query.eq('active', true)
       }
-      
-      const { data, error: fetchError } = await query
-      
-      if (fetchError) throw fetchError
-      setTasks(data || [])
-    } catch (err) {
-      console.error('Error al cargar tareas:', err)
-      setError(err.message)
-    } finally {
-      setLoading(false)
+
+      const { data, error } = await query
+      if (error) throw error
+      return data || []
     }
-  }, [])
+  })
 
-  // Cargar tareas al montar el componente
-  useEffect(() => {
-    fetchTasks()
-  }, [fetchTasks])
-
-  // Agregar nueva tarea
-  const addTask = async ({ name, is_customer_service = false, customer_id = null }) => {
-    setError(null)
-    try {
-      const { data, error: insertError } = await supabase
+  // 2. Mutations
+  const addMutation = useMutation({
+    mutationFn: async ({ name, is_customer_service = false, customer_id = null }) => {
+      const { data, error } = await supabase
         .from('tasks')
-        .insert([{
-          name,
-          is_customer_service,
-          customer_id,
-          active: true
-        }])
-        .select(`
-          *,
-          customer:customers(id, name, code)
-        `)
-      
-      if (insertError) throw insertError
-      
-      // Update local state directly without a refetch
-      setTasks(prev => [...prev, data[0]].sort((a, b) => (a.name ?? '').localeCompare(b.name ?? '')))
-      
-      return { success: true, data: data[0] }
-    } catch (err) {
-      console.error('Error al agregar tarea:', err)
-      setError(err.message)
-      return { success: false, error: err.message }
-    }
-  }
+        .insert([{ name, is_customer_service, customer_id, active: true }])
+        .select(`*, customer:customers(id, name, code)`)
 
-  // Actualizar tarea existente
-  const updateTask = async (id, updates) => {
-    setError(null)
-    try {
-      const { data, error: updateError } = await supabase
+      if (error) throw error
+      return data[0]
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] })
+    }
+  })
+
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, updates }) => {
+      const { data, error } = await supabase
         .from('tasks')
         .update(updates)
         .eq('id', id)
-        .select(`
-          *,
-          customer:customers(id, name, code)
-        `)
-      
-      if (updateError) throw updateError
-      
-      // Update local state directly without a refetch
-      setTasks(prev =>
-        prev.map(task => task.id === id ? data[0] : task)
-          .sort((a, b) => (a.name ?? '').localeCompare(b.name ?? ''))
-      )
-      
-      return { success: true, data: data[0] }
-    } catch (err) {
-      console.error('Error al actualizar tarea:', err)
-      setError(err.message)
-      return { success: false, error: err.message }
-    }
-  }
+        .select(`*, customer:customers(id, name, code)`)
 
-  // Activar/Desactivar tarea (soft delete)
-  const toggleTaskActive = async (id) => {
-    setError(null)
-    try {
-      // Obtener el estado actual
+      if (error) throw error
+      return data[0]
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] })
+    }
+  })
+
+  const toggleActiveMutation = useMutation({
+    mutationFn: async (id) => {
       const task = tasks.find(t => t.id === id)
       if (!task) throw new Error('Tarea no encontrada')
-      
-      const { data, error: updateError } = await supabase
+
+      const { data, error } = await supabase
         .from('tasks')
         .update({ active: !task.active })
         .eq('id', id)
         .select()
-      
-      if (updateError) throw updateError
-      
-      // Actualizar el estado local
-      if (data && data.length > 0) {
-        setTasks(prev => 
-          prev.map(task => task.id === id ? data[0] : task)
-        )
-      }
-      
-      return { success: true, data: data[0] }
+
+      if (error) throw error
+      return data[0]
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] })
+    }
+  })
+
+  const hardDeleteMutation = useMutation({
+    mutationFn: async (id) => {
+      const { error } = await supabase.from('tasks').delete().eq('id', id)
+      if (error) throw error
+      return true
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] })
+    }
+  })
+
+  // Funciones wrapper para mantener la API compatible con los componentes actuales
+  const addTask = async (taskData) => {
+    try {
+      const data = await addMutation.mutateAsync(taskData)
+      return { success: true, data }
     } catch (err) {
-      console.error('Error al cambiar estado de tarea:', err)
-      setError(err.message)
       return { success: false, error: err.message }
     }
   }
 
-  // Eliminar tarea (soft delete - marca como inactiva)
-  const deleteTask = async (id) => {
-    return await toggleTaskActive(id)
+  const updateTask = async (id, updates) => {
+    try {
+      const data = await updateMutation.mutateAsync({ id, updates })
+      return { success: true, data }
+    } catch (err) {
+      return { success: false, error: err.message }
+    }
   }
 
-  // Eliminar tarea permanentemente (usar con precaución)
-  const hardDeleteTask = async (id) => {
-    setError(null)
+  const toggleTaskActive = async (id) => {
     try {
-      const { error: deleteError } = await supabase
-        .from('tasks')
-        .delete()
-        .eq('id', id)
-      
-      if (deleteError) throw deleteError
-      
-      // Actualizar el estado local
-      setTasks(prev => prev.filter(task => task.id !== id))
-      
+      const data = await toggleActiveMutation.mutateAsync(id)
+      return { success: true, data }
+    } catch (err) {
+      return { success: false, error: err.message }
+    }
+  }
+
+  const deleteTask = async (id) => toggleTaskActive(id)
+
+  const hardDeleteTask = async (id) => {
+    try {
+      await hardDeleteMutation.mutateAsync(id)
       return { success: true }
     } catch (err) {
-      console.error('Error al eliminar tarea:', err)
-      setError(err.message)
       return { success: false, error: err.message }
     }
   }
 
-  // Refrescar la lista de tareas
-  const refresh = () => {
-    fetchTasks()
-  }
+  // Mantenemos la función fetchTasks dummy por retrocompatibilidad temporal
+  const fetchTasks = () => refresh()
 
   return {
     tasks,
     loading,
-    error,
+    error: queryError ? queryError.message : null,
     fetchTasks,
     addTask,
     updateTask,

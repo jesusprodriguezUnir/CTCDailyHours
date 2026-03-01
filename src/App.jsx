@@ -31,9 +31,9 @@ function App() {
     }
 
     return (
-      <div className="min-h-screen bg-gray-100">
+      <div className="min-h-screen bg-gray-100 dark:bg-gray-950 transition-colors duration-200">
         {/* Navegación de vistas */}
-        <div className="bg-white shadow-md">
+        <div className="bg-white dark:bg-gray-900 shadow-md transition-colors duration-200">
           <div className="max-w-7xl mx-auto px-4">
             <nav className="flex overflow-x-auto">
               <button
@@ -41,8 +41,8 @@ function App() {
                 className={`
                   px-6 py-4 text-sm font-medium border-b-2 transition-colors whitespace-nowrap
                   ${activeView === 'calendar'
-                    ? 'border-blue-600 text-blue-600'
-                    : 'border-transparent text-gray-600 hover:text-gray-800 hover:border-gray-300'
+                    ? 'border-blue-600 text-blue-600 dark:border-blue-500 dark:text-blue-500'
+                    : 'border-transparent text-gray-600 hover:text-gray-800 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:border-gray-700'
                   }
                 `}
               >
@@ -57,8 +57,8 @@ function App() {
                 className={`
                   px-6 py-4 text-sm font-medium border-b-2 transition-colors whitespace-nowrap
                   ${activeView === 'summary'
-                    ? 'border-blue-600 text-blue-600'
-                    : 'border-transparent text-gray-600 hover:text-gray-800 hover:border-gray-300'
+                    ? 'border-blue-600 text-blue-600 dark:border-blue-500 dark:text-blue-500'
+                    : 'border-transparent text-gray-600 hover:text-gray-800 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:border-gray-700'
                   }
                 `}
               >
@@ -75,8 +75,8 @@ function App() {
                   className={`
                     px-6 py-4 text-sm font-medium border-b-2 transition-colors whitespace-nowrap
                     ${activeView === 'admin'
-                      ? 'border-blue-600 text-blue-600'
-                      : 'border-transparent text-gray-600 hover:text-gray-800 hover:border-gray-300'
+                      ? 'border-blue-600 text-blue-600 dark:border-blue-500 dark:text-blue-500'
+                      : 'border-transparent text-gray-600 hover:text-gray-800 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:border-gray-700'
                     }
                   `}
                 >
@@ -104,7 +104,7 @@ function App() {
           )}
 
           {activeView === 'summary' && (
-            <SummaryTable 
+            <SummaryTable
               user={user}
               isResponsible={isResponsible}
               isAdmin={isAdmin}

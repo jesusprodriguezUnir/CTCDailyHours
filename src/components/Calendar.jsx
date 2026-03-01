@@ -76,20 +76,20 @@ export function Calendar({ entries = [], onSelectDate, selectedDate }) {
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-lg p-4">
+    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-4 transition-colors duration-200">
       <div className="flex justify-between items-center mb-4">
         <button
           onClick={prevMonth}
-          className="p-2 rounded-lg hover:bg-gray-100 text-xl font-bold"
+          className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-xl font-bold dark:text-gray-200 transition-colors"
         >
           ‹
         </button>
-        <h2 className="text-xl font-bold text-gray-800">
+        <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">
           {MONTHS[month]} {year}
         </h2>
         <button
           onClick={nextMonth}
-          className="p-2 rounded-lg hover:bg-gray-100 text-xl font-bold"
+          className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-xl font-bold dark:text-gray-200 transition-colors"
         >
           ›
         </button>
@@ -97,7 +97,7 @@ export function Calendar({ entries = [], onSelectDate, selectedDate }) {
 
       <div className="grid grid-cols-7 gap-1 mb-2">
         {DAYS.map((day, i) => (
-          <div key={i} className="text-center text-sm font-semibold text-gray-500 py-2">
+          <div key={i} className="text-center text-sm font-semibold text-gray-500 dark:text-gray-400 py-2">
             {day}
           </div>
         ))}
@@ -107,16 +107,16 @@ export function Calendar({ entries = [], onSelectDate, selectedDate }) {
         {daysInMonth.map((day, i) => {
           const dateStr = formatDate(day.date)
           const isCurrentMonth = day.isCurrentMonth
-          
+
           return (
             <button
               key={i}
               onClick={() => onSelectDate(dateStr)}
               className={`
                 relative p-2 min-h-[48px] rounded-lg text-center transition-all
-                ${!isCurrentMonth ? 'text-gray-300' : 'text-gray-700'}
-                ${isSelected(day.date) ? 'bg-blue-600 text-white' : 'hover:bg-gray-100'}
-                ${isToday(day.date) && !isSelected(day.date) ? 'bg-blue-50 border-2 border-blue-300' : ''}
+                ${!isCurrentMonth ? 'text-gray-300 dark:text-gray-600' : 'text-gray-700 dark:text-gray-200'}
+                ${isSelected(day.date) ? 'bg-blue-600 text-white' : 'hover:bg-gray-100 dark:hover:bg-gray-700'}
+                ${isToday(day.date) && !isSelected(day.date) ? 'bg-blue-50 dark:bg-blue-900/30 border-2 border-blue-300 dark:border-blue-700' : ''}
               `}
             >
               <span className="text-lg font-medium">{day.date.getDate()}</span>
