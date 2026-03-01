@@ -1,25 +1,18 @@
-import { useState, useEffect } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { fetchCustomers } from '../lib/supabase'
 
 export function useCustomers() {
-  const [customers, setCustomers] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
-
-  useEffect(() => {
-    async function load() {
-      try {
-        const data = await fetchCustomers()
-        setCustomers(data)
-      } catch (err) {
-        setError(err.message)
-        setCustomers([])
-      } finally {
-        setLoading(false)
-      }
+  const {
+    data: customers = [],
+    isLoading: loading,
+    error: queryError
+  } = useQuery({
+    queryKey: ['customers'],
+    queryFn: async () => {
+      const data = await fetchCustomers()
+      return data || []
     }
-    load()
-  }, [])
+  })
 
-  return { customers, loading, error }
+  return { customers, loading, error: queryError ? queryError.message : null }
 }

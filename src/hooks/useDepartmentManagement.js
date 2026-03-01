@@ -1,78 +1,121 @@
-import { useState } from 'react'
-import { 
-  fetchAllDepartments, 
-  createDepartment, 
-  updateDepartment, 
-  toggleDepartmentActive 
-} from '../lib/supabase'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { supabase } from '../lib/supabase'
 
-export function useDepartmentManagement() {
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
+export function useDepartmentManagement(filters = {}) {
+  const queryClient = useQueryClient()
 
-  const fetchDepartments = async (workCenterId = null) => {
-    setLoading(true)
-    setError(null)
-    try {
-      const data = await fetchAllDepartments(workCenterId)
-      return { success: true, data }
-    } catch (err) {
-      const errorMsg = err.message || 'Error al cargar departamentos'
-      setError(errorMsg)
-      return { success: false, error: errorMsg }
-    } finally {
-      setLoading(false)
+  const {
+    data: departments = [],
+    isLoading: loading,
+    error: queryError,
+    refetch: fetchDepartments
+  } = useQuery({
+    queryKey: ['departments', 'management', filters],
+    queryFn: async () => {
+      let query = supabase
+        .from('departments')
+        .select(`
+          *,
+          work_center:work_centers(id, name, code)
+        `)
+        .order('name')
+
+      if (filters.work_center_id) {
+        query = query.eq('work_center_id', filters.work_center_id)
+      }
+
+      if (filters.active !== undefined && filters.active !== '') {
+        query = query.eq('active', filters.active === 'true' || filters.active === true)
+      }
+
+      const { data, error } = await query
+      if (error) throw error
+      return data || []
     }
-  }
+  })
+
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: ['departments'] })
+
+  const addMutation = useMutation({
+    mutationFn: async ({ name, code, work_center_id }) => {
+      const { data, error } = await supabase
+        .from('departments')
+        .insert([{ name, code, work_center_id, active: true }])
+        .select(`*, work_center:work_centers(id, name, code)`)
+
+      if (error) throw error
+      return data[0]
+    },
+    onSuccess: invalidate
+  })
+
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, updates }) => {
+      const { data, error } = await supabase
+        .from('departments')
+        .update(updates)
+        .eq('id', id)
+        .select(`*, work_center:work_centers(id, name, code)`)
+
+      if (error) throw error
+      return data[0]
+    },
+    onSuccess: invalidate
+  })
+
+  const toggleActiveMutation = useMutation({
+    mutationFn: async (id) => {
+      const { data: current, error: fetchError } = await supabase
+        .from('departments')
+        .select('active')
+        .eq('id', id)
+        .single()
+
+      if (fetchError) throw fetchError
+
+      const { data, error } = await supabase
+        .from('departments')
+        .update({ active: !current.active })
+        .eq('id', id)
+        .select(`*, work_center:work_centers(id, name, code)`)
+
+      if (error) throw error
+      return data[0]
+    },
+    onSuccess: invalidate
+  })
 
   const addDepartment = async (name, code, workCenterId) => {
-    setLoading(true)
-    setError(null)
     try {
-      const data = await createDepartment({ name, code, work_center_id: workCenterId })
+      const data = await addMutation.mutateAsync({ name, code, work_center_id: workCenterId })
       return { success: true, data }
     } catch (err) {
-      const errorMsg = err.message || 'Error al crear departamento'
-      setError(errorMsg)
-      return { success: false, error: errorMsg }
-    } finally {
-      setLoading(false)
+      return { success: false, error: err.message }
     }
   }
 
   const updateDepartmentData = async (id, updates) => {
-    setLoading(true)
-    setError(null)
     try {
-      const data = await updateDepartment(id, updates)
+      const data = await updateMutation.mutateAsync({ id, updates })
       return { success: true, data }
     } catch (err) {
-      const errorMsg = err.message || 'Error al actualizar departamento'
-      setError(errorMsg)
-      return { success: false, error: errorMsg }
-    } finally {
-      setLoading(false)
+      return { success: false, error: err.message }
     }
   }
 
   const toggleActive = async (id) => {
-    setLoading(true)
-    setError(null)
     try {
-      const data = await toggleDepartmentActive(id)
+      const data = await toggleActiveMutation.mutateAsync(id)
       return { success: true, data }
     } catch (err) {
-      const errorMsg = err.message || 'Error al cambiar estado'
-      setError(errorMsg)
-      return { success: false, error: errorMsg }
-    } finally {
-      setLoading(false)
+      return { success: false, error: err.message }
     }
   }
 
   return {
+    departments,
     loading,
-    error,
+    error: queryError ? queryError.message : null,
     fetchDepartments,
     addDepartment,
     updateDepartmentData,

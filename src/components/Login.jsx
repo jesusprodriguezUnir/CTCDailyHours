@@ -1,30 +1,29 @@
 import { useState } from 'react'
+import { toast } from 'sonner'
 import { useEmployees } from '../hooks/useEmployees'
 
 export function Login({ onLogin }) {
   const { employees, loading } = useEmployees()
   const [selectedId, setSelectedId] = useState('')
   const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    setError('')
 
     if (!selectedId || !password) {
-      setError('Selecciona usuario e introduce contraseña')
+      toast.error('Selecciona usuario e introduce contraseña')
       return
     }
 
     const employee = employees.find(emp => emp.id === parseInt(selectedId))
-    
+
     if (!employee) {
-      setError('Usuario no encontrado')
+      toast.error('Usuario no encontrado')
       return
     }
 
     if (employee.password !== password) {
-      setError('Contraseña incorrecta')
+      toast.error('Contraseña incorrecta')
       return
     }
 
@@ -41,28 +40,22 @@ export function Login({ onLogin }) {
 
   return (
     <div className="max-w-md mx-auto">
-      <div className="bg-white rounded-xl shadow-lg p-6">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 transition-colors duration-200">
         <div className="text-center mb-6">
           <div className="text-4xl mb-2">🏭</div>
-          <h2 className="text-2xl font-bold text-gray-800">CTC Daily Hours</h2>
-          <p className="text-gray-600">Patio de Materiales</p>
+          <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">CTC Daily Hours</h2>
+          <p className="text-gray-600 dark:text-gray-400">Patio de Materiales</p>
         </div>
-
-        {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-4 text-center">
-            {error}
-          </div>
-        )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Usuario
             </label>
             <select
               value={selectedId}
               onChange={(e) => setSelectedId(e.target.value)}
-              className="w-full p-3 border-2 border-gray-300 rounded-xl focus:border-blue-600 focus:outline-none bg-white"
+              className="w-full p-3 border-2 border-gray-300 dark:border-gray-600 rounded-xl focus:border-blue-600 dark:focus:border-blue-500 focus:outline-none bg-white dark:bg-gray-700 dark:text-gray-100 transition-colors"
             >
               <option value="">-- Seleccionar --</option>
               {employees.map(emp => {
@@ -79,7 +72,7 @@ export function Login({ onLogin }) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Contraseña
             </label>
             <input
@@ -87,7 +80,7 @@ export function Login({ onLogin }) {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Introduce tu contraseña"
-              className="w-full p-3 border-2 border-gray-300 rounded-xl focus:border-blue-600 focus:outline-none"
+              className="w-full p-3 border-2 border-gray-300 dark:border-gray-600 rounded-xl focus:border-blue-600 dark:focus:border-blue-500 focus:outline-none bg-white dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400 transition-colors"
             />
           </div>
 
@@ -99,8 +92,8 @@ export function Login({ onLogin }) {
           </button>
         </form>
 
-        <div className="mt-6 p-4 bg-gray-100 rounded-lg text-sm text-gray-600">
-          <p className="font-semibold mb-2">Usuarios de prueba:</p>
+        <div className="mt-6 p-4 bg-gray-100 dark:bg-gray-900 rounded-lg text-sm text-gray-600 dark:text-gray-400 transition-colors">
+          <p className="font-semibold mb-2 text-gray-800 dark:text-gray-200">Usuarios de prueba:</p>
           <p>• Admin: admin123 (Administrador del sistema)</p>
           <p>• Responsables: nombre123 (ej: pedro123)</p>
           <p>• Empleados: nombre123 (ej: juan123)</p>

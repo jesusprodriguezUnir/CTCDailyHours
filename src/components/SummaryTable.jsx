@@ -1,12 +1,13 @@
 import { useState, useMemo, useEffect } from 'react'
+import { toast } from 'sonner'
 import { useTimeEntries } from '../hooks/useTimeEntries'
 import { useEmployees } from '../hooks/useEmployees'
 import { useTasks } from '../hooks/useTasks'
 import { useWorkCenters } from '../hooks/useWorkCenters'
 import { useDepartments } from '../hooks/useDepartments'
-import { 
-  exportToExcel, 
-  exportToPDF, 
+import {
+  exportToExcel,
+  exportToPDF,
   exportToCSV,
   groupByEmployeeForExport,
   groupByTaskForExport,
@@ -20,7 +21,7 @@ export function SummaryTable({ user, isResponsible, isAdmin }) {
   const { tasks, loading: loadingTasks } = useTasks()
   const { workCenters, loading: loadingCenters } = useWorkCenters()
   const { departments, loading: loadingDepartments } = useDepartments()
-  
+
   const [viewMode, setViewMode] = useState('employee') // 'employee', 'task', 'period'
   const [dateRange, setDateRange] = useState({
     start: '',
@@ -30,14 +31,13 @@ export function SummaryTable({ user, isResponsible, isAdmin }) {
   const [selectedTasks, setSelectedTasks] = useState([])
   const [selectedCenters, setSelectedCenters] = useState([])
   const [selectedDepartments, setSelectedDepartments] = useState([])
-  const [message, setMessage] = useState(null)
 
   // Inicializar fechas con el mes actual
   useEffect(() => {
     const now = new Date()
     const firstDay = new Date(now.getFullYear(), now.getMonth(), 1)
     const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0)
-    
+
     setDateRange({
       start: firstDay.toISOString().split('T')[0],
       end: lastDay.toISOString().split('T')[0]
@@ -117,8 +117,6 @@ export function SummaryTable({ user, isResponsible, isAdmin }) {
 
   const handleExport = (format) => {
     try {
-      setMessage(null)
-      
       const dateStr = new Date().toISOString().split('T')[0]
       const filename = `reporte_horas_${dateStr}`
       let result
@@ -144,14 +142,13 @@ export function SummaryTable({ user, isResponsible, isAdmin }) {
       }
 
       if (result.success) {
-        setMessage({ type: 'success', text: `Reporte exportado correctamente a ${format.toUpperCase()}` })
-        setTimeout(() => setMessage(null), 3000)
+        toast.success(`Reporte exportado correctamente a ${format.toUpperCase()}`)
       } else {
-        setMessage({ type: 'error', text: result.error || 'Error al exportar' })
+        toast.error(result.error || 'Error al exportar')
       }
     } catch (error) {
       console.error('Error al exportar:', error)
-      setMessage({ type: 'error', text: 'Error al exportar el reporte' })
+      toast.error('Error al exportar el reporte')
     }
   }
 
@@ -184,55 +181,46 @@ export function SummaryTable({ user, isResponsible, isAdmin }) {
   if (loading) {
     return (
       <div className="flex justify-center items-center p-8">
-        <div className="text-gray-600">Cargando datos...</div>
+        <div className="text-gray-600 dark:text-gray-400">Cargando datos...</div>
       </div>
     )
   }
 
   return (
     <div className="p-6">
-      <h2 className="text-2xl font-bold text-gray-800 mb-6">📊 Reportes y Resumen</h2>
-
-      {message && (
-        <div className={`mb-4 p-4 rounded-lg ${
-          message.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-        }`}>
-          {message.text}
-        </div>
-      )}
+      <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6">📊 Reportes y Resumen</h2>
 
       {/* Filtros */}
-      <div className="bg-white rounded-lg shadow p-4 mb-6">
-        <h3 className="font-semibold text-gray-800 mb-3">Filtros</h3>
-        
-        <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 ${
-          (isResponsible || isAdmin) ? 'lg:grid-cols-4' : 'lg:grid-cols-3'
-        }`}>
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 mb-6 transition-colors">
+        <h3 className="font-semibold text-gray-800 dark:text-gray-100 mb-3">Filtros</h3>
+
+        <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 ${(isResponsible || isAdmin) ? 'lg:grid-cols-4' : 'lg:grid-cols-3'
+          }`}>
           {/* Rango de fechas */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Fecha Inicio</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Fecha Inicio</label>
             <input
               type="date"
               value={dateRange.start}
               onChange={(e) => setDateRange(prev => ({ ...prev, start: e.target.value }))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 dark:text-white transition-colors"
             />
           </div>
-          
+
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Fecha Fin</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Fecha Fin</label>
             <input
               type="date"
               value={dateRange.end}
               onChange={(e) => setDateRange(prev => ({ ...prev, end: e.target.value }))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 dark:text-white transition-colors"
             />
           </div>
 
           {/* Filtro de empleados - Solo para Admin y Responsable */}
           {(isResponsible || isAdmin) && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Empleados ({selectedEmployees.length > 0 ? selectedEmployees.length : 'Todos'})
               </label>
               <select
@@ -242,7 +230,7 @@ export function SummaryTable({ user, isResponsible, isAdmin }) {
                   const values = Array.from(e.target.selectedOptions, option => parseInt(option.value))
                   setSelectedEmployees(values)
                 }}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 dark:text-white transition-colors"
                 size="1"
               >
                 {employees.map(emp => (
@@ -254,7 +242,7 @@ export function SummaryTable({ user, isResponsible, isAdmin }) {
 
           {/* Filtro de tareas */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Tareas ({selectedTasks.length > 0 ? selectedTasks.length : 'Todas'})
             </label>
             <select
@@ -264,7 +252,7 @@ export function SummaryTable({ user, isResponsible, isAdmin }) {
                 const values = Array.from(e.target.selectedOptions, option => parseInt(option.value))
                 setSelectedTasks(values)
               }}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 dark:text-white transition-colors"
               size="5"
             >
               {tasks.map(task => (
@@ -275,7 +263,7 @@ export function SummaryTable({ user, isResponsible, isAdmin }) {
 
           {/* Filtro de centros */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Centros ({selectedCenters.length > 0 ? selectedCenters.length : 'Todos'})
             </label>
             <select
@@ -285,7 +273,7 @@ export function SummaryTable({ user, isResponsible, isAdmin }) {
                 const values = Array.from(e.target.selectedOptions, option => parseInt(option.value))
                 setSelectedCenters(values)
               }}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 dark:text-white transition-colors"
               size="4"
             >
               {workCenters.map(center => (
@@ -296,7 +284,7 @@ export function SummaryTable({ user, isResponsible, isAdmin }) {
 
           {/* Filtro de departamentos */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Departamentos ({selectedDepartments.length > 0 ? selectedDepartments.length : 'Todos'})
             </label>
             <select
@@ -306,7 +294,7 @@ export function SummaryTable({ user, isResponsible, isAdmin }) {
                 const values = Array.from(e.target.selectedOptions, option => parseInt(option.value))
                 setSelectedDepartments(values)
               }}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 dark:text-white transition-colors"
               size="6"
             >
               {visibleDepartments.map(dept => (
@@ -323,7 +311,7 @@ export function SummaryTable({ user, isResponsible, isAdmin }) {
           {(isResponsible || isAdmin) && selectedEmployees.length > 0 && (
             <button
               onClick={() => setSelectedEmployees([])}
-              className="text-sm text-blue-600 hover:underline"
+              className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
             >
               Limpiar empleados
             </button>
@@ -331,7 +319,7 @@ export function SummaryTable({ user, isResponsible, isAdmin }) {
           {selectedTasks.length > 0 && (
             <button
               onClick={() => setSelectedTasks([])}
-              className="text-sm text-blue-600 hover:underline"
+              className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
             >
               Limpiar tareas
             </button>
@@ -342,7 +330,7 @@ export function SummaryTable({ user, isResponsible, isAdmin }) {
                 setSelectedCenters([])
                 setSelectedDepartments([])
               }}
-              className="text-sm text-blue-600 hover:underline"
+              className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
             >
               Limpiar centros
             </button>
@@ -350,7 +338,7 @@ export function SummaryTable({ user, isResponsible, isAdmin }) {
           {selectedDepartments.length > 0 && (
             <button
               onClick={() => setSelectedDepartments([])}
-              className="text-sm text-blue-600 hover:underline"
+              className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
             >
               Limpiar departamentos
             </button>
@@ -359,36 +347,33 @@ export function SummaryTable({ user, isResponsible, isAdmin }) {
       </div>
 
       {/* Modo de vista */}
-      <div className="bg-white rounded-lg shadow p-4 mb-6">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 mb-6 transition-colors">
         <div className="flex justify-between items-center">
           <div className="flex gap-2">
             <button
               onClick={() => setViewMode('employee')}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                viewMode === 'employee'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-              }`}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${viewMode === 'employee'
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600'
+                }`}
             >
               Por Empleado
             </button>
             <button
               onClick={() => setViewMode('task')}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                viewMode === 'task'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-              }`}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${viewMode === 'task'
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600'
+                }`}
             >
               Por Tarea
             </button>
             <button
               onClick={() => setViewMode('period')}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                viewMode === 'period'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-              }`}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${viewMode === 'period'
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600'
+                }`}
             >
               Por Período
             </button>
@@ -425,38 +410,36 @@ export function SummaryTable({ user, isResponsible, isAdmin }) {
       </div>
 
       {/* Tabla de resumen */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden transition-colors">
         {summary.length === 0 ? (
-          <div className="p-8 text-center text-gray-500">
+          <div className="p-8 text-center text-gray-500 dark:text-gray-400">
             No hay datos para mostrar con los filtros seleccionados
           </div>
         ) : (
           <>
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead className="bg-gray-50 dark:bg-gray-900 transition-colors">
                   <tr>
                     {Object.keys(summary[0]).map((key, index) => (
                       <th
                         key={index}
-                        className={`px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider ${
-                          key.includes('Total') ? 'bg-gray-100' : ''
-                        }`}
+                        className={`px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider ${key.includes('Total') ? 'bg-gray-100 dark:bg-gray-700' : ''
+                          }`}
                       >
                         {key}
                       </th>
                     ))}
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700 transition-colors">
                   {summary.map((row, index) => (
-                    <tr key={index} className="hover:bg-gray-50">
+                    <tr key={index} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                       {Object.values(row).map((value, colIndex) => (
                         <td
                           key={colIndex}
-                          className={`px-6 py-4 whitespace-nowrap text-sm ${
-                            typeof value === 'number' ? 'text-right font-medium' : 'text-gray-900'
-                          }`}
+                          className={`px-6 py-4 whitespace-nowrap text-sm ${typeof value === 'number' ? 'text-right font-medium text-gray-900 dark:text-white' : 'text-gray-900 dark:text-gray-200'
+                            }`}
                         >
                           {typeof value === 'number' ? value.toFixed(2) : value}
                         </td>
@@ -464,14 +447,14 @@ export function SummaryTable({ user, isResponsible, isAdmin }) {
                     </tr>
                   ))}
                 </tbody>
-                <tfoot className="bg-gray-100 font-bold">
+                <tfoot className="bg-gray-100 dark:bg-gray-900 font-bold transition-colors">
                   <tr>
-                    <td className="px-6 py-4 text-sm text-gray-900">
+                    <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">
                       TOTAL GENERAL
                     </td>
                     <td
                       colSpan={Object.keys(summary[0]).length - 1}
-                      className="px-6 py-4 text-right text-sm text-gray-900"
+                      className="px-6 py-4 text-right text-sm text-gray-900 dark:text-white"
                     >
                       {totalHours.toFixed(2)} horas
                     </td>
@@ -481,9 +464,9 @@ export function SummaryTable({ user, isResponsible, isAdmin }) {
             </div>
 
             {/* Información adicional */}
-            <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
-              <div className="text-sm text-gray-600">
-                <span className="font-medium">{filteredEntries.length}</span> registros encontrados
+            <div className="px-6 py-4 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 transition-colors">
+              <div className="text-sm text-gray-600 dark:text-gray-400">
+                <span className="font-medium dark:text-gray-200">{filteredEntries.length}</span> registros encontrados
                 {dateRange.start && dateRange.end && (
                   <span className="ml-4">
                     del {new Date(dateRange.start).toLocaleDateString('es-ES')} al {new Date(dateRange.end).toLocaleDateString('es-ES')}

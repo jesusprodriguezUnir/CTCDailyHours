@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { toast } from 'sonner'
 import { useEmployeeManagement } from '../hooks/useEmployeeManagement'
 import { useDepartments } from '../hooks/useDepartments'
 
@@ -29,17 +30,22 @@ function PasswordStrengthIndicator({ password }) {
 }
 
 export function EmployeeManagement() {
+  const [filters, setFilters] = useState({
+    role: '',
+    active: ''
+  })
+
   const {
+    employees,
     loading,
     error,
     addEmployee,
     updateEmployee,
-    toggleEmployeeActive,
-    fetchEmployees
-  } = useEmployeeManagement()
+    toggleEmployeeActive
+  } = useEmployeeManagement(filters)
+
   const { departments } = useDepartments()
 
-  const [employees, setEmployees] = useState([])
   const [showModal, setShowModal] = useState(false)
   const [editingEmployee, setEditingEmployee] = useState(null)
   const [formData, setFormData] = useState({
@@ -49,23 +55,6 @@ export function EmployeeManagement() {
     department_id: null
   })
   const [saving, setSaving] = useState(false)
-  const [message, setMessage] = useState(null)
-  const [filters, setFilters] = useState({
-    role: '',
-    active: ''
-  })
-
-  // Cargar empleados al montar
-  useEffect(() => {
-    loadEmployees()
-  }, [])
-
-  const loadEmployees = async () => {
-    const result = await fetchEmployees()
-    if (result.success) {
-      setEmployees(result.data)
-    }
-  }
 
   const handleOpenModal = (employee = null) => {
     setEditingEmployee(employee)
@@ -76,14 +65,12 @@ export function EmployeeManagement() {
       department_id: employee?.department_id || employee?.department?.id || ''
     })
     setShowModal(true)
-    setMessage(null)
   }
 
   const handleCloseModal = () => {
     setShowModal(false)
     setEditingEmployee(null)
     setFormData({ name: '', role: 'employee', password: '', department_id: '' })
-    setMessage(null)
   }
 
   const handleChange = (e) => {
@@ -95,22 +82,21 @@ export function EmployeeManagement() {
     e.preventDefault()
 
     if (!formData.name.trim()) {
-      setMessage({ type: 'error', text: 'El nombre es requerido' })
+      toast.error('El nombre es requerido')
       return
     }
 
     if (!editingEmployee && !formData.password) {
-      setMessage({ type: 'error', text: 'La contraseña es requerida para nuevos empleados' })
+      toast.error('La contraseña es requerida para nuevos empleados')
       return
     }
 
     if (!formData.department_id) {
-      setMessage({ type: 'error', text: 'El departamento es requerido' })
+      toast.error('El departamento es requerido')
       return
     }
 
     setSaving(true)
-    setMessage(null)
 
     try {
       let result
@@ -135,19 +121,13 @@ export function EmployeeManagement() {
       }
 
       if (result.success) {
-        setMessage({
-          type: 'success',
-          text: editingEmployee ? 'Empleado actualizado correctamente' : 'Empleado creado correctamente'
-        })
-        await loadEmployees()
-        setTimeout(() => {
-          handleCloseModal()
-        }, 1500)
+        toast.success(editingEmployee ? 'Empleado actualizado correctamente' : 'Empleado creado correctamente')
+        handleCloseModal()
       } else {
-        setMessage({ type: 'error', text: result.error || 'Error al guardar el empleado' })
+        toast.error(result.error || 'Error al guardar el empleado')
       }
     } catch (err) {
-      setMessage({ type: 'error', text: 'Error al guardar el empleado' })
+      toast.error('Error al guardar el empleado')
     } finally {
       setSaving(false)
     }
@@ -156,31 +136,15 @@ export function EmployeeManagement() {
   const handleToggleActive = async (employee) => {
     const result = await toggleEmployeeActive(employee.id)
     if (result.success) {
-      setMessage({
-        type: 'success',
-        text: employee.active ? 'Empleado desactivado' : 'Empleado activado'
-      })
-      await loadEmployees()
-      setTimeout(() => setMessage(null), 3000)
+      toast.success(employee.active ? 'Empleado desactivado' : 'Empleado activado')
     } else {
-      setMessage({ type: 'error', text: result.error || 'Error al cambiar el estado' })
+      toast.error(result.error || 'Error al cambiar el estado')
     }
   }
 
-  const handleFilterChange = async (e) => {
+  const handleFilterChange = (e) => {
     const { name, value } = e.target
-    const newFilters = { ...filters, [name]: value }
-    setFilters(newFilters)
-
-    // Aplicar filtros
-    const filterObj = {}
-    if (newFilters.role) filterObj.role = newFilters.role
-    if (newFilters.active !== '') filterObj.active = newFilters.active === 'true'
-
-    const result = await fetchEmployees(filterObj)
-    if (result.success) {
-      setEmployees(result.data)
-    }
+    setFilters(prev => ({ ...prev, [name]: value }))
   }
 
   const getRoleBadgeColor = (role) => {
@@ -202,7 +166,7 @@ export function EmployeeManagement() {
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-800">Gestión de Empleados</h2>
+        <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Gestión de Empleados</h2>
         <button
           onClick={() => handleOpenModal()}
           className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
@@ -212,16 +176,8 @@ export function EmployeeManagement() {
         </button>
       </div>
 
-      {message && (
-        <div className={`mb-4 p-4 rounded-lg ${
-          message.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-        }`}>
-          {message.text}
-        </div>
-      )}
-
       {error && (
-        <div className="mb-4 p-4 rounded-lg bg-red-100 text-red-800">
+        <div className="mb-4 p-4 rounded-lg bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300">
           Error: {error}
         </div>
       )}
@@ -229,12 +185,12 @@ export function EmployeeManagement() {
       {/* Filtros */}
       <div className="mb-4 flex gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Rol</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Rol</label>
           <select
             name="role"
             value={filters.role}
             onChange={handleFilterChange}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 dark:text-white transition-colors"
           >
             <option value="">Todos</option>
             <option value="admin">Administrador</option>
@@ -243,12 +199,12 @@ export function EmployeeManagement() {
           </select>
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Estado</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Estado</label>
           <select
             name="active"
             value={filters.active}
             onChange={handleFilterChange}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 dark:text-white transition-colors"
           >
             <option value="">Todos</option>
             <option value="true">Activos</option>
@@ -258,70 +214,69 @@ export function EmployeeManagement() {
       </div>
 
       {/* Tabla de empleados */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden transition-colors">
+        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+          <thead className="bg-gray-50 dark:bg-gray-900 transition-colors">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Nombre
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Centro
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Departamento
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Rol
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Estado
               </th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Acciones
               </th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+          <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700 transition-colors">
             {loading && employees.length === 0 ? (
               <tr>
-                <td colSpan="6" className="px-6 py-4 text-center text-gray-500">
+                <td colSpan="6" className="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
                   Cargando empleados...
                 </td>
               </tr>
             ) : employees.length === 0 ? (
               <tr>
-                <td colSpan="6" className="px-6 py-4 text-center text-gray-500">
+                <td colSpan="6" className="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
                   No hay empleados para mostrar
                 </td>
               </tr>
             ) : (
               employees.map((employee) => (
-                <tr key={employee.id} className="hover:bg-gray-50">
+                <tr key={employee.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">{employee.name}</div>
+                    <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{employee.name}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-700">
+                    <div className="text-sm text-gray-700 dark:text-gray-300">
                       {employee.department?.work_center?.name || 'N/A'}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-700">
+                    <div className="text-sm text-gray-700 dark:text-gray-300">
                       {employee.department?.name || 'N/A'}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getRoleBadgeColor(employee.role)}`}>
+                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full dark:bg-opacity-20 ${getRoleBadgeColor(employee.role)}`}>
                       {getRoleLabel(employee.role)}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                      employee.active
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-gray-100 text-gray-800'
-                    }`}>
+                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${employee.active
+                      ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
+                      : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+                      }`}>
                       {employee.active ? 'Activo' : 'Inactivo'}
                     </span>
                   </td>
@@ -351,22 +306,14 @@ export function EmployeeManagement() {
       {/* Modal para agregar/editar empleado */}
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <h3 className="text-xl font-bold mb-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md transition-colors">
+            <h3 className="text-xl font-bold mb-4 dark:text-white">
               {editingEmployee ? 'Editar Empleado' : 'Nuevo Empleado'}
             </h3>
 
-            {message && (
-              <div className={`mb-4 p-3 rounded ${
-                message.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-              }`}>
-                {message.text}
-              </div>
-            )}
-
             <form onSubmit={handleSubmit}>
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Nombre Completo
                 </label>
                 <input
@@ -374,7 +321,7 @@ export function EmployeeManagement() {
                   name="name"
                   value={formData.name}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 dark:text-white transition-colors"
                   placeholder="Ej: Juan Pérez García"
                   disabled={saving}
                   autoFocus
@@ -382,14 +329,14 @@ export function EmployeeManagement() {
               </div>
 
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Departamento
                 </label>
                 <select
                   name="department_id"
                   value={formData.department_id}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 dark:text-white transition-colors"
                   disabled={saving}
                 >
                   <option value="">-- Seleccionar --</option>
@@ -402,14 +349,14 @@ export function EmployeeManagement() {
               </div>
 
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Rol
                 </label>
                 <select
                   name="role"
                   value={formData.role}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 dark:text-white transition-colors"
                   disabled={saving}
                 >
                   <option value="employee">Empleado</option>
@@ -419,7 +366,7 @@ export function EmployeeManagement() {
               </div>
 
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Contraseña {editingEmployee && '(dejar en blanco para no cambiar)'}
                 </label>
                 <input
@@ -427,7 +374,7 @@ export function EmployeeManagement() {
                   name="password"
                   value={formData.password}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 dark:text-white transition-colors"
                   placeholder={editingEmployee ? 'Nueva contraseña (opcional)' : 'Contraseña'}
                   disabled={saving}
                   autoComplete="new-password"
@@ -444,7 +391,7 @@ export function EmployeeManagement() {
                 <button
                   type="button"
                   onClick={handleCloseModal}
-                  className="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300"
+                  className="px-4 py-2 text-gray-700 dark:text-gray-200 bg-gray-200 dark:bg-gray-600 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors"
                   disabled={saving}
                 >
                   Cancelar
