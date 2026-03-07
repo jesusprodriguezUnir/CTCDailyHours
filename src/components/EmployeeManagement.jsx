@@ -1,8 +1,10 @@
 import { useState } from 'react'
 import { toast } from 'sonner'
+import { Plus, Edit2, Archive, ArchiveRestore, Users } from 'lucide-react'
 import { useEmployeeManagement } from '../hooks/useEmployeeManagement'
 import { DataTable } from './ui/DataTable'
 import { EmployeeModal } from './modals/EmployeeModal'
+import { ConfirmDialog } from './ui/ConfirmDialog'
 
 export function EmployeeManagement() {
   const [filters, setFilters] = useState({
@@ -22,6 +24,12 @@ export function EmployeeManagement() {
   const [showModal, setShowModal] = useState(false)
   const [editingEmployee, setEditingEmployee] = useState(null)
   const [saving, setSaving] = useState(false)
+
+  // Estado para ConfirmDialog
+  const [confirmDialog, setConfirmDialog] = useState({
+    isOpen: false,
+    employee: null
+  })
 
   const handleOpenModal = (employee = null) => {
     setEditingEmployee(employee)
@@ -71,13 +79,27 @@ export function EmployeeManagement() {
     }
   }
 
-  const handleToggleActive = async (employee) => {
+  const handleRequestToggleActive = (employee) => {
+    if (employee.active) {
+      // Pedir confirmación al desactivar
+      setConfirmDialog({
+        isOpen: true,
+        employee
+      })
+    } else {
+      // Activar directamente
+      executeToggleActive(employee)
+    }
+  }
+
+  const executeToggleActive = async (employee) => {
     const result = await toggleEmployeeActive(employee.id)
     if (result.success) {
       toast.success(employee.active ? 'Empleado desactivado' : 'Empleado activado')
     } else {
       toast.error(result.error || 'Error al cambiar el estado')
     }
+    setConfirmDialog({ isOpen: false, employee: null })
   }
 
   const handleFilterChange = (e) => {
@@ -145,22 +167,22 @@ export function EmployeeManagement() {
     {
       header: 'Acciones',
       align: 'right',
-      className: 'text-right',
+      className: 'text-right flex items-center justify-end gap-2',
       cell: (row) => (
-        <div className="text-right text-sm font-medium">
+        <div className="text-right text-sm font-medium flex items-center justify-end gap-3">
           <button
             onClick={() => handleOpenModal(row)}
-            className="text-blue-600 hover:text-blue-900 mr-4"
+            className="text-blue-600 hover:text-blue-900 p-1 rounded-md hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors"
             title="Editar"
           >
-            ✏️
+            <Edit2 className="w-4 h-4" />
           </button>
           <button
-            onClick={() => handleToggleActive(row)}
-            className="text-yellow-600 hover:text-yellow-900"
+            onClick={() => handleRequestToggleActive(row)}
+            className={`${row.active ? 'text-orange-600 hover:text-orange-900 hover:bg-orange-50 dark:hover:bg-orange-900/30' : 'text-green-600 hover:text-green-900 hover:bg-green-50 dark:hover:bg-green-900/30'} p-1 rounded-md transition-colors`}
             title={row.active ? 'Desactivar' : 'Activar'}
           >
-            🔄
+            {row.active ? <Archive className="w-4 h-4" /> : <ArchiveRestore className="w-4 h-4" />}
           </button>
         </div>
       )
@@ -170,18 +192,21 @@ export function EmployeeManagement() {
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Gestión de Empleados</h2>
+        <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 flex items-center gap-3">
+          <Users className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+          Gestión de Empleados
+        </h2>
         <button
           onClick={() => handleOpenModal()}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 shadow-sm"
         >
-          <span>➕</span>
+          <Plus className="w-4 h-4" />
           <span>Nuevo Empleado</span>
         </button>
       </div>
 
       {error && (
-        <div className="mb-4 p-4 rounded-lg bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300">
+        <div className="mb-4 p-4 rounded-lg bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 border border-red-200 dark:border-red-800 block">
           Error: {error}
         </div>
       )}
@@ -222,7 +247,8 @@ export function EmployeeManagement() {
         columns={columns}
         data={employees}
         loading={loading}
-        emptyMessage="No hay empleados para mostrar"
+        emptyMessage="No hay empleados que coincidan con los filtros"
+        emptyIcon={Users}
       />
 
       {/* Modal para agregar/editar empleado */}
@@ -232,6 +258,18 @@ export function EmployeeManagement() {
         onSubmit={handleSubmit}
         employee={editingEmployee}
         saving={saving}
+      />
+
+      {/* Confirmación para desactivar */}
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        title="Desactivar Empleado"
+        message={`¿Estás seguro de que deseas desactivar a "${confirmDialog.employee?.name}"? Este usuario ya no podrá iniciar sesión ni registrar horas.`}
+        confirmText="Desactivar"
+        cancelText="Cancelar"
+        variant="warning"
+        onConfirm={() => executeToggleActive(confirmDialog.employee)}
+        onCancel={() => setConfirmDialog({ isOpen: false, employee: null })}
       />
     </div>
   )

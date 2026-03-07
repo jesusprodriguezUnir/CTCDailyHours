@@ -1,8 +1,10 @@
 import { useState } from 'react'
 import { toast } from 'sonner'
+import { Plus, Edit2, Archive, ArchiveRestore, Building2 } from 'lucide-react'
 import { useWorkCenterManagement } from '../hooks/useWorkCenterManagement'
 import { DataTable } from './ui/DataTable'
 import { WorkCenterModal } from './modals/WorkCenterModal'
+import { ConfirmDialog } from './ui/ConfirmDialog'
 
 export function WorkCenterManagement() {
   const {
@@ -18,6 +20,12 @@ export function WorkCenterManagement() {
   const [editingCenter, setEditingCenter] = useState(null)
   const [saving, setSaving] = useState(false)
   const [filterActive, setFilterActive] = useState('')
+
+  // Estado para ConfirmDialog
+  const [confirmDialog, setConfirmDialog] = useState({
+    isOpen: false,
+    center: null
+  })
 
   const handleOpenModal = (center = null) => {
     setEditingCenter(center)
@@ -59,13 +67,27 @@ export function WorkCenterManagement() {
     }
   }
 
-  const handleToggleActive = async (center) => {
+  const handleRequestToggleActive = (center) => {
+    if (center.active) {
+      // Pedir confirmación al desactivar
+      setConfirmDialog({
+        isOpen: true,
+        center
+      })
+    } else {
+      // Activar directamente
+      executeToggleActive(center)
+    }
+  }
+
+  const executeToggleActive = async (center) => {
     const result = await toggleActive(center.id)
     if (result.success) {
       toast.success(center.active ? 'Centro desactivado' : 'Centro activado')
     } else {
       toast.error(result.error || 'Error al cambiar el estado')
     }
+    setConfirmDialog({ isOpen: false, center: null })
   }
 
   const filteredCenters = workCenters.filter(center => {
@@ -100,21 +122,22 @@ export function WorkCenterManagement() {
     {
       header: 'Acciones',
       align: 'right',
-      className: 'text-right',
+      className: 'text-right flex items-center justify-end gap-2',
       cell: (row) => (
-        <div className="text-right text-sm font-medium">
+        <div className="text-right text-sm font-medium flex items-center justify-end gap-3">
           <button
             onClick={() => handleOpenModal(row)}
-            className="text-blue-600 hover:text-blue-900 mr-4"
+            className="text-blue-600 hover:text-blue-900 p-1 rounded-md hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors"
+            title="Editar"
           >
-            ✏️ Editar
+            <Edit2 className="w-4 h-4" />
           </button>
           <button
-            onClick={() => handleToggleActive(row)}
-            className={`${row.active ? 'text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300' : 'text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300'
-              }`}
+            onClick={() => handleRequestToggleActive(row)}
+            className={`${row.active ? 'text-orange-600 hover:text-orange-900 hover:bg-orange-50 dark:hover:bg-orange-900/30' : 'text-green-600 hover:text-green-900 hover:bg-green-50 dark:hover:bg-green-900/30'} p-1 rounded-md transition-colors`}
+            title={row.active ? 'Desactivar' : 'Activar'}
           >
-            {row.active ? '🚫 Desactivar' : '✅ Activar'}
+            {row.active ? <Archive className="w-4 h-4" /> : <ArchiveRestore className="w-4 h-4" />}
           </button>
         </div>
       )
@@ -126,19 +149,28 @@ export function WorkCenterManagement() {
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Centros de Trabajo</h2>
+          <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 flex items-center gap-3">
+            <Building2 className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+            Centros de Trabajo
+          </h2>
           <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
             Gestiona los centros de trabajo de la organización
           </p>
         </div>
         <button
           onClick={() => handleOpenModal()}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 shadow-sm"
         >
-          <span>➕</span>
+          <Plus className="w-4 h-4" />
           <span>Nuevo Centro</span>
         </button>
       </div>
+
+      {error && (
+        <div className="mb-4 p-4 rounded-lg bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 border border-red-200 dark:border-red-800 block">
+          Error: {error}
+        </div>
+      )}
 
       {/* Filters */}
       <div className="mb-4 flex gap-4">
@@ -164,6 +196,7 @@ export function WorkCenterManagement() {
         data={filteredCenters}
         loading={loading}
         emptyMessage="No hay centros de trabajo registrados"
+        emptyIcon={Building2}
       />
 
       {/* Modal */}
@@ -173,6 +206,18 @@ export function WorkCenterManagement() {
         onSubmit={handleSubmit}
         center={editingCenter}
         saving={saving}
+      />
+
+      {/* Confirmación para desactivar */}
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        title="Desactivar Centro de Trabajo"
+        message={`¿Estás seguro de que deseas desactivar el centro "${confirmDialog.center?.name}"? Los empleados y departamentos asociados podrían verse afectados.`}
+        confirmText="Desactivar"
+        cancelText="Cancelar"
+        variant="warning"
+        onConfirm={() => executeToggleActive(confirmDialog.center)}
+        onCancel={() => setConfirmDialog({ isOpen: false, center: null })}
       />
     </div>
   )

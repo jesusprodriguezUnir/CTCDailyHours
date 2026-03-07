@@ -1,11 +1,17 @@
 import React from 'react'
+import { Skeleton } from './Skeleton'
+import { EmptyState } from './EmptyState'
 
 export function DataTable({
     columns,
     data,
     loading = false,
-    emptyMessage = "No hay datos para mostrar"
+    emptyMessage = "No hay datos para mostrar",
+    emptyIcon = undefined
 }) {
+    // Generate a default number of skeleton rows if no data is present yet
+    const skeletonRowsCount = data && data.length > 0 ? data.length : 5
+
     return (
         <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden shadow-sm transition-colors">
             <div className="overflow-x-auto">
@@ -27,21 +33,23 @@ export function DataTable({
                     </thead>
                     <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700 transition-colors">
                         {loading ? (
-                            <tr>
-                                <td
-                                    colSpan={columns.length}
-                                    className="px-6 py-8 text-center text-gray-500 dark:text-gray-400"
-                                >
-                                    Cargando...
-                                </td>
-                            </tr>
+                            Array.from({ length: skeletonRowsCount }).map((_, rowIndex) => (
+                                <tr key={`skeleton-row-${rowIndex}`}>
+                                    {columns.map((column, colIndex) => (
+                                        <td key={`skeleton-cell-${colIndex}`} className="px-6 py-4 whitespace-nowrap">
+                                            <Skeleton variant="text" className="w-full max-w-[80%]" />
+                                        </td>
+                                    ))}
+                                </tr>
+                            ))
                         ) : data.length === 0 ? (
                             <tr>
-                                <td
-                                    colSpan={columns.length}
-                                    className="px-6 py-8 text-center text-gray-500 dark:text-gray-400"
-                                >
-                                    {emptyMessage}
+                                <td colSpan={columns.length} className="px-0 py-0">
+                                    <EmptyState
+                                        title={emptyMessage}
+                                        description=""
+                                        {...(emptyIcon && { icon: emptyIcon })}
+                                    />
                                 </td>
                             </tr>
                         ) : (
