@@ -169,7 +169,10 @@ export function DatabaseManagement({ user }) {
 
   const handleDownloadTemplate = () => {
     const a = document.createElement('a')
-    a.href = '/plantilla_bd_ctc_muestra.xlsx'
+    const baseUrl = import.meta.env.BASE_URL || '/'
+    // Ensure we don't have double slashes but keep the base path
+    const fullPath = `${baseUrl}/plantilla_bd_ctc_muestra.xlsx`.replace(/\/+/g, '/')
+    a.href = fullPath
     a.download = 'plantilla_bd_ctc_muestra.xlsx'
     a.click()
   }

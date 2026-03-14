@@ -7,7 +7,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico'],
+      includeAssets: ['favicon.ico', 'plantilla_bd_ctc_muestra.xlsx'],
       manifest: {
         name: 'CTC Daily Hours',
         short_name: 'CTC Hours',
