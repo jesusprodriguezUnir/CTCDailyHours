@@ -112,7 +112,7 @@ function App() {
           )}
 
           {activeView === 'admin' && canManage && (
-            <AdminPanel />
+            <AdminPanel user={user} />
           )}
         </div>
       </div>

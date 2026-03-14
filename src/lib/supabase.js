@@ -252,3 +252,116 @@ export async function fetchAllDepartments(workCenterId = null) {
   if (error) throw error
   return data
 }
+
+// ========== DATABASE RESET (admin only) ==========
+
+/**
+ * Borra todos los datos y los re-inserta desde el objeto `data` del Excel.
+ * Orden de borrado respetando las foreign keys:
+ *   time_entries → employees → tasks → customers → departments → work_centers
+ * Orden de inserción inverso.
+ * @param {Object} data - { workCenters, departments, customers, tasks, employees }
+ */
+export async function resetDatabase(data) {
+  const { workCenters, departments, customers, tasks, employees } = data
+
+  // ---- 1. BORRAR en orden (FK-safe) ----
+  const deleteSteps = [
+    supabase.from('time_entries').delete().neq('id', 0),
+    supabase.from('employees').delete().neq('id', 0),
+    supabase.from('tasks').delete().neq('id', 0),
+    supabase.from('customers').delete().neq('id', 0),
+    supabase.from('departments').delete().neq('id', 0),
+    supabase.from('work_centers').delete().neq('id', 0),
+  ]
+  for (const step of deleteSteps) {
+    const { error } = await step
+    if (error) throw error
+  }
+
+  // ---- 2. INSERTAR work_centers ----
+  const { data: insertedCenters, error: wcError } = await supabase
+    .from('work_centers')
+    .insert(workCenters.map(c => ({ name: c.name, code: c.code, active: c.active })))
+    .select()
+  if (wcError) throw wcError
+
+  // Mapa code → id (para resolver dependencias)
+  const centerMap = {}
+  insertedCenters.forEach(c => { centerMap[c.code] = c.id })
+
+  // ---- 3. INSERTAR departments ----
+  const deptRows = departments.map(d => ({
+    name: d.name,
+    code: d.code,
+    active: d.active,
+    work_center_id: centerMap[d.work_center_code],
+  }))
+  const { data: insertedDepts, error: deptError } = await supabase
+    .from('departments')
+    .insert(deptRows)
+    .select()
+  if (deptError) throw deptError
+
+  // Mapa (centerCode+deptCode) → id
+  const deptMap = {}
+  insertedDepts.forEach((d, i) => {
+    const key = `${deptRows[i].work_center_id}_${d.code}`
+    deptMap[key] = d.id
+  })
+  // También mapa simple por code para búsquedas rápidas
+  const deptByCode = {}
+  insertedDepts.forEach((d, i) => {
+    const wcId = deptRows[i].work_center_id
+    if (!deptByCode[wcId]) deptByCode[wcId] = {}
+    deptByCode[wcId][d.code] = d.id
+  })
+
+  // ---- 4. INSERTAR customers ----
+  const { data: insertedCustomers, error: custError } = await supabase
+    .from('customers')
+    .insert(customers.map(c => ({ name: c.name, code: c.code, active: c.active })))
+    .select()
+  if (custError) throw custError
+
+  const customerMap = {}
+  insertedCustomers.forEach(c => { customerMap[c.code] = c.id })
+
+  // ---- 5. INSERTAR tasks ----
+  const taskRows = tasks.map(t => ({
+    name: t.name,
+    is_customer_service: t.is_customer_service,
+    customer_id: t.customer_code ? (customerMap[t.customer_code] ?? null) : null,
+    active: t.active,
+  }))
+  const { data: insertedTasks, error: taskError } = await supabase
+    .from('tasks')
+    .insert(taskRows)
+    .select()
+  if (taskError) throw taskError
+
+  // ---- 6. INSERTAR employees ----
+  const employeeRows = employees.map(e => {
+    const wcId = centerMap[e.work_center_code]
+    const deptId = wcId && deptByCode[wcId] ? deptByCode[wcId][e.department_code] : null
+    return {
+      name: e.name,
+      role: e.role,
+      password: e.password,
+      department_id: deptId,
+      active: e.active,
+    }
+  })
+  const { error: empError } = await supabase
+    .from('employees')
+    .insert(employeeRows)
+  if (empError) throw empError
+
+  return {
+    workCenters: insertedCenters.length,
+    departments: insertedDepts.length,
+    customers: insertedCustomers.length,
+    tasks: insertedTasks.length,
+    employees: employeeRows.length,
+  }
+}
