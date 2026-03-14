@@ -22,7 +22,9 @@ export function SummaryTable({ user, isResponsible, isAdmin }) {
   const { workCenters, loading: loadingCenters } = useWorkCenters()
   const { departments, loading: loadingDepartments } = useDepartments()
 
-  const [viewMode, setViewMode] = useState('employee') // 'employee', 'task', 'period'
+  const [viewMode, setViewMode] = useState('detail') // 'detail', 'employee', 'task', 'period'
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage, setItemsPerPage] = useState(10)
   const [dateRange, setDateRange] = useState({
     start: '',
     end: ''
@@ -104,16 +106,38 @@ export function SummaryTable({ user, isResponsible, isAdmin }) {
     })
   }, [filteredEntries, employees, tasks])
 
-  // Calcular resumen según modo de vista
+  // Calcular resumen según modo de vista (solo para vistas agrupadas)
   const summary = useMemo(() => {
     if (viewMode === 'employee') {
       return groupByEmployeeForExport(enrichedEntries, tasks)
     } else if (viewMode === 'task') {
       return groupByTaskForExport(enrichedEntries, employees)
-    } else {
+    } else if (viewMode === 'period') {
       return groupByPeriodForExport(enrichedEntries)
+    } else {
+      return [] // 'detail' usa paginatedEntries
     }
   }, [enrichedEntries, viewMode, employees, tasks])
+
+  // Datos detallados para tabla y exportación
+  const detailData = useMemo(() => {
+    return formatTimeEntriesForExport(enrichedEntries)
+  }, [enrichedEntries])
+
+  // Datos paginados para vista detalle
+  const paginatedEntries = useMemo(() => {
+    if (viewMode !== 'detail') return []
+    const startIndex = (currentPage - 1) * itemsPerPage
+    return detailData.slice(startIndex, startIndex + itemsPerPage)
+  }, [detailData, viewMode, currentPage, itemsPerPage])
+
+  const totalPages = Math.ceil(detailData.length / itemsPerPage)
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [dateRange, selectedEmployees, selectedTasks, selectedCenters, selectedDepartments, viewMode])
+
 
   const handleExport = (format) => {
     try {
@@ -122,23 +146,31 @@ export function SummaryTable({ user, isResponsible, isAdmin }) {
       let result
 
       const viewTitles = {
+        detail: 'Reporte Detallado de Horas',
         employee: 'Reporte de Horas por Empleado',
         task: 'Reporte de Horas por Tarea',
         period: 'Reporte de Horas por Período'
       }
 
+      const exportData = viewMode === 'detail' ? detailData : summary
+
+      if (exportData.length === 0) {
+        toast.error('No hay datos para exportar')
+        return
+      }
+
       if (format === 'excel') {
-        result = exportToExcel(summary, filename, viewTitles[viewMode])
+        result = exportToExcel(exportData, filename, viewTitles[viewMode])
       } else if (format === 'pdf') {
-        const totalHours = summary.reduce((sum, row) => sum + (row['Total Horas'] || 0), 0)
-        result = exportToPDF(summary, filename, viewTitles[viewMode], {
+        const totalHours = exportData.reduce((sum, row) => sum + (parseFloat(row['Total Horas'] || row['Horas']) || 0), 0)
+        result = exportToPDF(exportData, filename, viewTitles[viewMode], {
           orientation: 'landscape',
           totals: {
             'Total General de Horas': totalHours.toFixed(2)
           }
         })
       } else if (format === 'csv') {
-        result = exportToCSV(summary, filename)
+        result = exportToCSV(exportData, filename)
       }
 
       if (result.success) {
@@ -169,8 +201,9 @@ export function SummaryTable({ user, isResponsible, isAdmin }) {
   }
 
   const totalHours = useMemo(() => {
-    return summary.reduce((sum, row) => sum + (row['Total Horas'] || 0), 0)
-  }, [summary])
+    const dataToSum = viewMode === 'detail' ? detailData : summary;
+    return dataToSum.reduce((sum, row) => sum + (parseFloat(row['Total Horas'] || row['Horas']) || 0), 0)
+  }, [summary, detailData, viewMode])
 
   const loading = loadingEntries || loadingEmployees || loadingTasks || loadingCenters || loadingDepartments
 
@@ -348,8 +381,17 @@ export function SummaryTable({ user, isResponsible, isAdmin }) {
 
       {/* Modo de vista */}
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 mb-6 transition-colors">
-        <div className="flex justify-between items-center">
-          <div className="flex gap-2">
+        <div className="flex justify-between items-center sm:flex-row flex-col gap-4">
+          <div className="flex gap-2 flex-wrap">
+            <button
+              onClick={() => setViewMode('detail')}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${viewMode === 'detail'
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600'
+                }`}
+            >
+              Detallado
+            </button>
             <button
               onClick={() => setViewMode('employee')}
               className={`px-4 py-2 rounded-lg font-medium transition-colors ${viewMode === 'employee'
@@ -409,9 +451,9 @@ export function SummaryTable({ user, isResponsible, isAdmin }) {
         </div>
       </div>
 
-      {/* Tabla de resumen */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden transition-colors">
-        {summary.length === 0 ? (
+      {/* Tabla de resumen o detalles */}
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow flex flex-col transition-colors">
+        {(viewMode === 'detail' ? detailData.length === 0 : summary.length === 0) ? (
           <div className="p-8 text-center text-gray-500 dark:text-gray-400">
             No hay datos para mostrar con los filtros seleccionados
           </div>
@@ -421,10 +463,10 @@ export function SummaryTable({ user, isResponsible, isAdmin }) {
               <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                 <thead className="bg-gray-50 dark:bg-gray-900 transition-colors">
                   <tr>
-                    {Object.keys(summary[0]).map((key, index) => (
+                    {Object.keys(viewMode === 'detail' ? detailData[0] : summary[0]).map((key, index) => (
                       <th
                         key={index}
-                        className={`px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider ${key.includes('Total') ? 'bg-gray-100 dark:bg-gray-700' : ''
+                        className={`px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider ${key.includes('Total') || key === 'Horas' ? 'bg-gray-100 dark:bg-gray-700 text-right' : ''
                           }`}
                       >
                         {key}
@@ -433,27 +475,33 @@ export function SummaryTable({ user, isResponsible, isAdmin }) {
                   </tr>
                 </thead>
                 <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700 transition-colors">
-                  {summary.map((row, index) => (
+                  {(viewMode === 'detail' ? paginatedEntries : summary).map((row, index) => (
                     <tr key={index} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                      {Object.values(row).map((value, colIndex) => (
-                        <td
-                          key={colIndex}
-                          className={`px-6 py-4 whitespace-nowrap text-sm ${typeof value === 'number' ? 'text-right font-medium text-gray-900 dark:text-white' : 'text-gray-900 dark:text-gray-200'
-                            }`}
-                        >
-                          {typeof value === 'number' ? value.toFixed(2) : value}
-                        </td>
-                      ))}
+                      {Object.entries(row).map(([key, value], colIndex) => {
+                        const isNumeric = typeof value === 'number' || (!isNaN(parseFloat(value)) && (key.includes('Total') || key === 'Horas'));
+                        return (
+                          <td
+                            key={colIndex}
+                            className={`px-6 py-4 whitespace-nowrap text-sm ${isNumeric ? 'text-right font-medium text-gray-900 dark:text-white' : 'text-gray-900 dark:text-gray-200'
+                              }`}
+                          >
+                            {isNumeric ? parseFloat(value).toFixed(2) : value}
+                          </td>
+                        )
+                      })}
                     </tr>
                   ))}
                 </tbody>
                 <tfoot className="bg-gray-100 dark:bg-gray-900 font-bold transition-colors">
                   <tr>
-                    <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">
+                    <td className="px-6 py-4 text-sm text-gray-900 dark:text-white" colSpan={
+                      viewMode === 'detail'
+                        ? (detailData.length > 0 ? Object.keys(detailData[0]).length - 1 : 1)
+                        : (summary.length > 0 ? Object.keys(summary[0]).length - 1 : 1)
+                    }>
                       TOTAL GENERAL
                     </td>
                     <td
-                      colSpan={Object.keys(summary[0]).length - 1}
                       className="px-6 py-4 text-right text-sm text-gray-900 dark:text-white"
                     >
                       {totalHours.toFixed(2)} horas
@@ -463,10 +511,66 @@ export function SummaryTable({ user, isResponsible, isAdmin }) {
               </table>
             </div>
 
+            {/* Paginación - solo para vista detallada */}
+            {viewMode === 'detail' && detailData.length > 0 && (
+              <div className="px-6 py-3 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between transition-colors">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-700 dark:text-gray-300">
+                    Mostrar
+                  </span>
+                  <select
+                    value={itemsPerPage}
+                    onChange={(e) => {
+                      setItemsPerPage(Number(e.target.value))
+                      setCurrentPage(1)
+                    }}
+                    className="border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-sm bg-white dark:bg-gray-700 dark:text-white"
+                  >
+                    {[10, 25, 50, 100].map(limit => (
+                      <option key={limit} value={limit}>{limit}</option>
+                    ))}
+                  </select>
+                  <span className="text-sm text-gray-700 dark:text-gray-300">
+                    registros
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-4">
+                  <span className="text-sm text-gray-700 dark:text-gray-300">
+                    Página {currentPage} de {totalPages} ({detailData.length} registros)
+                  </span>
+                  <div className="flex gap-1">
+                    <button
+                      onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                      disabled={currentPage === 1}
+                      className="px-3 py-1 rounded border border-gray-300 dark:border-gray-600 text-sm disabled:opacity-50 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 disabled:hover:bg-transparent"
+                    >
+                      Anterior
+                    </button>
+                    <button
+                      onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                      disabled={currentPage === totalPages}
+                      className="px-3 py-1 rounded border border-gray-300 dark:border-gray-600 text-sm disabled:opacity-50 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 disabled:hover:bg-transparent"
+                    >
+                      Siguiente
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Información adicional */}
             <div className="px-6 py-4 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 transition-colors">
               <div className="text-sm text-gray-600 dark:text-gray-400">
-                <span className="font-medium dark:text-gray-200">{filteredEntries.length}</span> registros encontrados
+                {viewMode === 'detail' ? (
+                  <>
+                    <span className="font-medium dark:text-gray-200">{filteredEntries.length}</span> registros devueltos
+                  </>
+                ) : (
+                  <>
+                    <span className="font-medium dark:text-gray-200">{summary.length}</span> agrupaciones (de <span className="font-medium dark:text-gray-200">{filteredEntries.length}</span> registros totales)
+                  </>
+                )}
                 {dateRange.start && dateRange.end && (
                   <span className="ml-4">
                     del {new Date(dateRange.start).toLocaleDateString('es-ES')} al {new Date(dateRange.end).toLocaleDateString('es-ES')}
